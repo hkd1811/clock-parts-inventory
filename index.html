@@ -66,7 +66,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-03 v88 — 가공계산기: 나무두께가 너무 얇아 가공깊이 조절이 불가능할 때 버튼 비활성화+경고 표시";
+const APP_VERSION = "2026-08-03 v89 — 가공계산기 숫자입력칸의 브라우저 기본 스핀 화살표 제거(아래 커스텀 스핀버튼만 사용)";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -2772,11 +2772,11 @@ function CncSpinField({ label, value, onChange, min, max, step = 0.5 }) {
         {label}
       </span>
       <input
-        type="number"
+        type="text"
+        inputMode="decimal"
         className="w-16 text-center text-sm rounded border py-1"
         style={{ borderColor: "#BFAE8C" }}
         value={raw}
-        step={step}
         onChange={(e) => setRaw(e.target.value)}
         onBlur={commitRaw}
         onKeyDown={(e) => {
