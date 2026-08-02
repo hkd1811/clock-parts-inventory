@@ -1,0 +1,4208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>시계 부속 재고대장</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='%23FBF7EF' stroke='%238C6239' stroke-width='6'/><line x1='50' y1='50' x2='30' y2='28' stroke='%232B2420' stroke-width='6' stroke-linecap='round'/><line x1='50' y1='50' x2='68' y2='34' stroke='%23B0503A' stroke-width='5' stroke-linecap='round'/><circle cx='50' cy='50' r='4' fill='%232B2420'/></svg>" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/plain" id="app-source">
+const { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } = React;
+
+/* ---------------------------- icons (경량 자체 제작 SVG 세트) ---------------------------- */
+
+function Icon({ children, size = 16, style, className }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={style} className={className}>
+      {children}
+    </svg>
+  );
+}
+const Search = (p) => <Icon {...p}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.5" y2="16.5" /></Icon>;
+const Plus = (p) => <Icon {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Icon>;
+const Package = (p) => <Icon {...p}><path d="M21 8l-9-5-9 5 9 5 9-5z" /><path d="M3 8v8l9 5 9-5V8" /><line x1="12" y1="13" x2="12" y2="21" /></Icon>;
+const Cog = (p) => <Icon {...p}><circle cx="12" cy="12" r="3" /><path d="M4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4" /></Icon>;
+const ListTree = (p) => <Icon {...p}><line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="20" y2="12" /><line x1="12" y1="18" x2="20" y2="18" /></Icon>;
+const X = (p) => <Icon {...p}><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></Icon>;
+const Trash2 = (p) => <Icon {...p}><path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></Icon>;
+const ImageOff = (p) => <Icon {...p}><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="4" y1="4" x2="20" y2="20" /></Icon>;
+const ArrowDownCircle = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="16" /><path d="M8.5 12.5L12 16l3.5-3.5" /></Icon>;
+const ArrowUpCircle = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><line x1="12" y1="16" x2="12" y2="8" /><path d="M8.5 11.5L12 8l3.5 3.5" /></Icon>;
+const ExternalLink = (p) => <Icon {...p}><path d="M14 4h6v6" /><line x1="20" y1="4" x2="10" y2="14" /><path d="M18 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h6" /></Icon>;
+const Save = (p) => <Icon {...p}><path d="M5 4h11l3 3v13H5z" /><path d="M8 4v6h8V4" /><path d="M8 20v-6h8v6" /></Icon>;
+const AlertTriangle = (p) => <Icon {...p}><path d="M12 3l10 18H2z" /><line x1="12" y1="10" x2="12" y2="15" /><line x1="12" y1="17.5" x2="12" y2="17.51" /></Icon>;
+const UploadCloud = (p) => <Icon {...p}><path d="M7 18a4.5 4.5 0 01-1-8.9A5.5 5.5 0 0116.9 8H17a4 4 0 011 7.87" /><path d="M12 12v7" /><path d="M9 15l3-3 3 3" /></Icon>;
+const Settings = Cog;
+const Link2 = (p) => <Icon {...p}><rect x="3" y="8" width="8" height="8" rx="4" /><rect x="13" y="8" width="8" height="8" rx="4" /><line x1="11" y1="12" x2="13" y2="12" /></Icon>;
+const CheckCircle2 = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></Icon>;
+const InfoIcon = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><line x1="12" y1="11" x2="12" y2="16" /><line x1="12" y1="7.5" x2="12" y2="7.51" /></Icon>;
+const DownloadIcon = (p) => <Icon {...p}><path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 19h14" /></Icon>;
+const ClipboardPaste = (p) => <Icon {...p}><rect x="5" y="4" width="14" height="17" rx="2" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M9 13h6M9 17h4" /></Icon>;
+const FileImage = (p) => <Icon {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-4 4-2-2-6 6" /></Icon>;
+const MoreHorizontal = (p) => <Icon {...p}><circle cx="5" cy="12" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="19" cy="12" r="1.5" fill="currentColor" /></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /></Icon>;
+const Ruler = (p) => <Icon {...p}><path d="M3 16l5-5 12 12-5 5z" /><path d="M7.5 12.5l1.5 1.5" /><path d="M10.5 9.5l1.5 1.5" /><path d="M13.5 6.5l1.5 1.5" /></Icon>;
+
+const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch: "main", token: "" });
+
+/* ----------------------------------------------------------------------
+   시계 부속 재고대장 (Clock Parts Ledger)
+   - 무브먼트(진자형 포함) / 시계바늘(A/B타입) 재고관리
+   - 서랍(탭) 은유: 부속을 서랍별로 분류해 보관한다는 컨셉을 탭 디자인에 반영
+   - 재고 다이얼: 시계 문자반 형태의 원형 게이지로 재고 수량을 시각화
+------------------------------------------------------------------------- */
+
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+const APP_VERSION = "2026-07-31 v87 — 필터 체크박스 그룹 정정(축종류/소음종류/옵션), 태양축 기본체크";
+
+const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
+const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
+const NOISE_TYPES = ["무소음", "일반형"];
+const HAND_TYPES = ["A타입", "B타입"];
+const HAND_COLORS = ["블랙", "화이트", "골드", "실버", "레드", "블루"];
+// 같은 색을 다른 표기(순우리말/한자어)로 등록한 기존 데이터를 검색 가능하도록 통일
+const COLOR_SYNONYMS = { 검정: "블랙", 흰색: "화이트", 금색: "골드", 은색: "실버", 빨강: "레드", 파랑: "블루" };
+const normalizeColor = (c) => COLOR_SYNONYMS[c] || c;
+const HAND_LENGTH_BUCKETS = [
+  { key: "50이하", label: "소형 (~50mm)", test: (n) => n <= 50 },
+  { key: "50~100", label: "중형 (50~100mm)", test: (n) => n > 50 && n <= 100 },
+  { key: "100~120", label: "준대형 (100~120mm)", test: (n) => n > 100 && n <= 120 },
+  { key: "120이상", label: "대형 (120mm~)", test: (n) => n > 120 },
+];
+const MOVEMENT_CATEGORIES = ["무브먼트", "기타"];
+
+const emptyMovement = (category = "무브먼트") => ({
+  id: uid(),
+  category,
+  model: "",
+  brand: "영타운",
+  shaftLength: "14mm",
+  axisType: "태양축",
+  noiseType: "무소음",
+  pendulum: false,
+  reverse: false,
+  price: "",
+  source: "",
+  image: "",
+  stock: 0,
+  drawer: "",
+  note: "",
+});
+
+const emptyHand = () => ({
+  id: uid(),
+  model: "",
+  type: "A타입",
+  length: "",
+  color: "블랙",
+  price: "",
+  source: "",
+  image: "",
+  stock: 0,
+  drawer: "",
+  note: "",
+});
+
+const INFO_KINDS = ["웹사이트", "문서", "이미지"];
+const INFO_KIND_COLORS = {
+  웹사이트: { bg: "#EFE3D0", text: "#7A5230" },
+  문서: { bg: "#E7EFE6", text: "#5B7B5A" },
+  이미지: { bg: "#F5E4E0", text: "#B0503A" },
+};
+
+const emptyInfoItem = (kind = "웹사이트") => ({
+  id: uid(),
+  kind,
+  title: "",
+  description: "",
+  url: "",
+  fileName: "",
+  priority: 0,
+});
+
+// 로컬 윈도우 파일 경로(D:\문서\...)를 붙여넣어도 링크로 바로 열리도록 file:// 형식으로 변환
+function normalizeFileUrl(u) {
+  const s = (u || "").trim();
+  if (/^[A-Za-z]:\\/.test(s)) {
+    return "file:///" + s.replace(/\\/g, "/");
+  }
+  return s;
+}
+
+/* ----------------------------------------------------------------------
+   자동 등록 목록 (SEED)
+   - 판매처 링크에서 가져온 항목을 아래 배열에 추가하고 파일을 갱신합니다.
+   - 앱이 처음 열릴 때 source 링크 기준으로 아직 등록되지 않은 항목만
+     자동으로 재고에 추가됩니다 (재고 0으로 시작).
+   - 이미 사용자가 수정/입출고한 항목은 source가 같아도 건드리지 않습니다.
+------------------------------------------------------------------------- */
+
+const SEED_MOVEMENTS = [
+  {
+    category: "무브먼트",
+    shaftLength: "14mm",
+    noiseType: "무소음",
+    brand: "기타",
+    model: "고급형 무소음 무브먼트14mm",
+    shaftType: "기타",
+    pendulum: false,
+    hourShaft: "",
+    minuteShaft: "",
+    price: 3000,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=957",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/957.jpg",
+    note: "클락포인트 [프리미어정품](A형) (볼트7mm, 바늘꽂이높이7mm) - 브랜드 미확인",
+  },
+  {
+    category: "무브먼트",
+    shaftLength: "14mm",
+    noiseType: "일반형",
+    brand: "기타",
+    model: "일반무브먼트14mm",
+    shaftType: "기타",
+    pendulum: false,
+    hourShaft: "",
+    minuteShaft: "",
+    price: 3000,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=958",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/958.jpg",
+    note: "클락포인트 [프리미어정품](A형) 벽시계수리 (볼트7mm, 바늘꽂이높이7mm) - 브랜드 미확인",
+  },
+  {
+    category: "무브먼트",
+    shaftLength: "14mm",
+    noiseType: "일반형",
+    brand: "기타",
+    model: "고급형 흔들이 일반무브먼트14mm",
+    shaftType: "기타",
+    pendulum: true,
+    hourShaft: "",
+    minuteShaft: "",
+    price: 4000,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=959",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/959.jpg",
+    note: "클락포인트 [프리미어정품](A형) 추시계수리 (볼트7mm, 바늘꽂이높이7mm) - 브랜드 미확인",
+  },
+  {
+    category: "무브먼트",
+    shaftLength: "19mm",
+    noiseType: "무소음",
+    brand: "기타",
+    model: "고급형 무소음 무브먼트19mm",
+    shaftType: "기타",
+    pendulum: false,
+    hourShaft: "",
+    minuteShaft: "",
+    price: 4000,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1138",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1138.jpg",
+    note: "클락포인트 [프리미어정품](A형) (볼트12mm, 바늘꽂이높이7mm) - 브랜드 미확인",
+  },
+  {
+    category: "무브먼트",
+    shaftLength: "22mm",
+    noiseType: "일반형",
+    brand: "기타",
+    model: "고급형 일반무브먼트22mm",
+    shaftType: "기타",
+    pendulum: false,
+    hourShaft: "",
+    minuteShaft: "",
+    price: 4000,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1152",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1152.jpg",
+    note: "클락포인트 [프리미어정품](A형) (볼트15.5mm, 바늘꽂이높이6.5mm) - 브랜드 미확인",
+  },
+  {
+    category: "무브먼트",
+    shaftLength: "14mm",
+    noiseType: "무소음",
+    brand: "기타",
+    pendulum: false,
+    reverse: true,
+    price: 2500,
+    source: "https://xn--989aj13a54chrb8zk5pe.com/shop/item.php?it_id=1577398666",
+    image: "https://xn--989aj13a54chrb8zk5pe.com/data/item/1577398666/66y067iM66i87Yq414mm.jpg",
+    note: "유진시계부속 - 거꾸로 가는 무브먼트(14mm), 원산지 중국. 브랜드/소음종류(무소음·저소음) 미확인, 우선 무소음으로 등록",
+  },
+];
+
+const MOVEMENT_SPEC_COMMON = {
+  bodySize: 56, // mm, 정사각 몸체 56×56 — 모델별 정밀 데이터가 없어 공통 가정으로 사용
+  bodyDepth: 16.0, // mm, 몸체 최대 깊이 — 포켓이 이보다 깊으면 무브먼트가 뜸
+};
+
+// 시계판 최대두께 = 샤프트길이(D) − 오프셋. 영타운 12888 시리즈 규격표 4개 샘플 중 3개(STC/STC5/ST)가 정확히 D−2.0,
+// STC1만 D−2.5로 확인됨 — 사용자가 다수값(2.0)으로 통일하기로 결정(2026-07-31). 재고의 "샤프트길이" 필드(7/10/14/18mm 버킷)가
+// 곧 이 D값이라는 것도 확인됨 — 그래서 더 이상 모델별 정밀 스펙표가 필요 없고, 등록된 무브먼트라면 무엇이든(모델명 매칭 없이)
+// 이 공식 하나로 계산 가능해짐. STC1처럼 실제 오프셋이 2.5인 모델은 이 공식으로 시계판최대두께를 0.5mm 더 크게(=가공깊이를 그만큼
+// 얕게) 추천할 수 있음 — 안전 마진 없이 다수값을 택한 것이니, 정말 정밀한 값이 필요하면 실측 확인 권장.
+const CNC_SHAFT_TO_MAX_PANEL_OFFSET_MM = 2.0;
+
+function deriveMovementSpec(shaftD, label) {
+  const d = Number(shaftD);
+  if (!d || Number.isNaN(d) || d <= 0) return null;
+  return {
+    model: label || `D${d}mm`,
+    shaftD: d,
+    maxPanelThickness: Math.max(d - CNC_SHAFT_TO_MAX_PANEL_OFFSET_MM, 0.5),
+  };
+}
+
+const SEED_HANDS = [
+  {
+    type: "A타입",
+    length: 65,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1006",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1006.jpg",
+    note: "클락포인트 A11",
+  },
+  {
+    type: "A타입",
+    length: 35,
+    color: "로즈골드",
+    price: 1800,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1005",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1005.jpg",
+    note: "클락포인트 A10",
+  },
+  {
+    type: "A타입",
+    length: 42,
+    color: "화이트",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1004",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1004.jpg",
+    note: "클락포인트 A06",
+  },
+  {
+    type: "A타입",
+    length: 42,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1003",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1003.jpg",
+    note: "클락포인트 A05",
+  },
+  {
+    type: "A타입",
+    length: 37,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1002",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1002.jpg",
+    note: "클락포인트 A03",
+  },
+  {
+    type: "B타입",
+    length: 110,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000615",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000615.jpg",
+    note: "클락포인트 B14 (⚠️ 사이트에서 '구매 불가' 표시됨 - 품절/단종 추정)",
+  },
+  {
+    type: "A타입",
+    length: 70,
+    color: "블랙",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000613",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000613.jpg",
+    note: "클락포인트 A21",
+  },
+  {
+    type: "B타입",
+    length: 105,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000612",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000612.jpg",
+    note: "클락포인트 B13",
+  },
+  {
+    type: "A타입",
+    length: 92,
+    color: "실버",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000609",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000609.jpg",
+    note: "클락포인트 A29",
+  },
+  {
+    type: "A타입",
+    length: 92,
+    color: "그레이",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000608",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000608.jpg",
+    note: "클락포인트 A28",
+  },
+  {
+    type: "A타입",
+    length: 117,
+    color: "화이트",
+    price: 2000,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000607",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000607.jpg",
+    note: "클락포인트 A45",
+  },
+  {
+    type: "A타입",
+    length: 117,
+    color: "블랙",
+    price: 1600,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000606",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000606.jpg",
+    note: "클락포인트 A43",
+  },
+  {
+    type: "A타입",
+    length: 117,
+    color: "화이트",
+    price: 1600,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000605",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000605.jpg",
+    note: "클락포인트 A44",
+  },
+  {
+    type: "A타입",
+    length: 115,
+    color: "화이트",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000603",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000603.jpg",
+    note: "클락포인트 A40",
+  },
+  {
+    type: "A타입",
+    length: 115,
+    color: "레드",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000602",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000602.jpg",
+    note: "클락포인트 A41",
+  },
+  {
+    type: "A타입",
+    length: 115,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000601",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000601.jpg",
+    note: "클락포인트 A39",
+  },
+  {
+    type: "A타입",
+    length: 110,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000600",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000600.jpg",
+    note: "클락포인트 A38",
+  },
+  {
+    type: "A타입",
+    length: 110,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000599",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000599.jpg",
+    note: "클락포인트 A37",
+  },
+  {
+    type: "A타입",
+    length: 105,
+    color: "화이트",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000598",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000598.jpg",
+    note: "클락포인트 A36",
+  },
+  {
+    type: "A타입",
+    length: 105,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000597",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000597.jpg",
+    note: "클락포인트 A35",
+  },
+  {
+    type: "A타입",
+    length: 103,
+    color: "실버",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000594",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000594.jpg",
+    note: "클락포인트 A33",
+  },
+  {
+    type: "A타입",
+    length: 103,
+    color: "화이트",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000593",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000593.jpg",
+    note: "클락포인트 A32",
+  },
+  {
+    type: "B타입",
+    length: 37,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1022",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1022.jpg",
+    note: "클락포인트 B01",
+  },
+  {
+    type: "A타입",
+    length: 115,
+    color: "로즈골드",
+    price: 1600,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000610",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000610.jpg",
+    note: "클락포인트 A42",
+  },
+  {
+    type: "A타입",
+    length: 92,
+    color: "골드",
+    price: 1600,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000614",
+    image:
+      "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000614.jpg",
+    note: "클락포인트 A30",
+  },
+  {
+    type: "A타입",
+    length: 37,
+    color: "화이트",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1150",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1150.jpg",
+    note: "클락포인트 A04",
+  },
+  {
+    type: "A타입",
+    length: 29,
+    color: "실버",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1025",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1025.jpg",
+    note: "클락포인트 A02",
+  },
+  {
+    type: "A타입",
+    length: 55,
+    color: "화이트",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1024",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1024.jpg",
+    note: "클락포인트 A08",
+  },
+  {
+    type: "A타입",
+    length: 55,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1143",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1143.jpg",
+    note: "클락포인트 A07",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "그레이",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1023",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1023.jpg",
+    note: "클락포인트 A12",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "실버",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1028",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1028.jpg",
+    note: "클락포인트 A13",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "골드",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1000000592",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1000000592.jpg",
+    note: "클락포인트 A14",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "블랙",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1007",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1007.jpg",
+    note: "클락포인트 A15",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "그레이",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1008",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1008.jpg",
+    note: "클락포인트 A16",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "실버",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1009",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1009.jpg",
+    note: "클락포인트 A17",
+  },
+  {
+    type: "A타입",
+    length: 63,
+    color: "골드",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1010",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1010.jpg",
+    note: "클락포인트 A18",
+  },
+  {
+    type: "A타입",
+    length: 70,
+    color: "블랙",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1011",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1011.jpg",
+    note: "클락포인트 A19",
+  },
+  {
+    type: "A타입",
+    length: 83,
+    color: "블랙",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1012",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1012.jpg",
+    note: "클락포인트 A22",
+  },
+  {
+    type: "A타입",
+    length: 83,
+    color: "블랙",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1237",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1237.jpg",
+    note: "클락포인트 A23",
+  },
+  {
+    type: "A타입",
+    length: 85,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1029",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1029.jpg",
+    note: "클락포인트 A24",
+  },
+  {
+    type: "A타입",
+    length: 85,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1013",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1013.jpg",
+    note: "클락포인트 A25",
+  },
+  {
+    type: "A타입",
+    length: 85,
+    color: "화이트",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1031",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1031.jpg",
+    note: "클락포인트 A26",
+  },
+  {
+    type: "A타입",
+    length: 90,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1241",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1241.jpg",
+    note: "클락포인트 A27",
+  },
+  {
+    type: "B타입",
+    length: 40,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1021",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1021.jpg",
+    note: "클락포인트 B04",
+  },
+  {
+    type: "B타입",
+    length: 42,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1016",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1016.jpg",
+    note: "클락포인트 B05",
+  },
+  {
+    type: "B타입",
+    length: 55,
+    color: "블랙",
+    price: 1100,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1017",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1017.jpg",
+    note: "클락포인트 B06",
+  },
+  {
+    type: "B타입",
+    length: 66,
+    color: "블랙",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1018",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1018.jpg",
+    note: "클락포인트 B07",
+  },
+  {
+    type: "B타입",
+    length: 70,
+    color: "블랙",
+    price: 1300,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1019",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1019.jpg",
+    note: "클락포인트 B08",
+  },
+  {
+    type: "B타입",
+    length: 85,
+    color: "로즈골드",
+    price: 1500,
+    source: "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1147",
+    image: "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1147.jpg",
+    note: "클락포인트 B09",
+  },
+  {
+    type: "B타입",
+    length: 22,
+    color: "흰색(시분+18초 흰색)",
+    price: 385,
+    source: "https://www.allcrart.com/shop/shopdetail.html?branduid=74588&xcode=015&mcode=003&scode=002&type=X&search=&sort=regdate",
+    image: "https://www.allcrart.com/shopimages/piaozhy/0150030000902.jpg",
+    note: "올크라트 시계바늘(미니)구형 22+18초/막대 — 클락포인트 A/B 호환 규격 아님, 초침 18mm 별도 포함. 색상/가격 기준 확인 필요(흰색·낱개 385원으로 우선 등록, 검정+빨강초침 옵션·10개1조 3,630원 옵션도 있음)",
+  },
+  {
+    type: "B타입",
+    length: 194,
+    color: "블랙",
+    price: 2640,
+    source: "https://www.allcrart.com/shop/shopdetail.html?branduid=49445&search=%BD%C3%B0%E8%B9%D9%B4%C3&sort=",
+    image: "https://www.allcrart.com/shopimages/piaozhy/0150030000862.jpg",
+    note: "올크라트 시계바늘(대)구형 세이코4,웰겐7,11,16mm 대형2호 — 클락포인트 A/B 호환 규격 아님. 시침 133mm/분침 194mm/초침 96mm(빨강) 세트, 분침 길이 기준 등록. 10개1조 25,300원 옵션도 있음",
+  },
+  {
+    type: "A타입",
+    length: 28,
+    color: "블랙",
+    price: 500,
+    source: "https://xn--989aj13a54chrb8zk5pe.com/shop/item.php?it_id=1575868043",
+    image: "https://xn--989aj13a54chrb8zk5pe.com/data/item/1575868043/thumb-6rKA7KCV66y867Cp7Jq47IaM6rKA7KCV66y867Cp7Jq47LSI7Lmo_500x500.jpg",
+    note: "유진시계부속 검정 물방울(소), 모델명 B1021. \"youngtown 무브먼트 전용\" 명시 — 영타운 전용이라 A타입으로 등록. 시침18mm/분침28mm/초침25mm, 원산지 국산",
+  },
+  {
+    type: "A타입",
+    length: 34,
+    color: "블랙",
+    price: 500,
+    source: "https://xn--989aj13a54chrb8zk5pe.com/shop/item.php?it_id=1607219491",
+    image: "https://xn--989aj13a54chrb8zk5pe.com/data/item/1607219491/thumb-7IK86rCB7IK86rCB7IaM6rKA7KCV7LSI7Lmo_500x500.jpg",
+    note: "유진시계부속 검정 삼각(소), 모델명 B1030. 시침27mm/분침34mm/초침35mm, 원산지 국산. 이 상품은 브랜드 호환 문구 없음 — A/B타입 미확인, 우선 A타입으로 등록(구멍 지름 확인 후 필요시 재분류 필요)",
+  },
+  // 클락포인트 단종/품절 상품 — 웹사이트에서 상품 자체가 내려가 구매처 링크 없음. 사진 파일명(제품명_컬러_분침길이_재고수량)에서 파싱해 일괄 등록.
+  {
+    type: "A타입",
+    model: "AT14",
+    length: 120,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT14_블랙_120_5.jpg",
+    stock: 5,
+    drawer: "",
+    note: "AT14(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT15",
+    length: 120,
+    color: "화이트",
+    price: "",
+    source: "",
+    image: "images/AT15_화이트_120_2.jpg",
+    stock: 2,
+    drawer: "",
+    note: "AT15(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT17",
+    length: 120,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT17_블랙_120_4.jpg",
+    stock: 4,
+    drawer: "",
+    note: "AT17(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT19",
+    length: 120,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT19_블랙_120_2.jpg",
+    stock: 2,
+    drawer: "",
+    note: "AT19(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT20",
+    length: 120,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT20_블랙_120_1.jpg",
+    stock: 1,
+    drawer: "",
+    note: "AT20(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT25",
+    length: 123,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT25_블랙_123_5.jpg",
+    stock: 5,
+    drawer: "",
+    note: "AT25(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT26",
+    length: 123,
+    color: "골드",
+    price: "",
+    source: "",
+    image: "images/AT26_골드_123_2.jpg",
+    stock: 2,
+    drawer: "",
+    note: "AT26(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT27",
+    length: 123,
+    color: "블루",
+    price: "",
+    source: "",
+    image: "images/AT27_블루_123_2.jpg",
+    stock: 2,
+    drawer: "",
+    note: "AT27(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT28",
+    length: 123,
+    color: "실버",
+    price: "",
+    source: "",
+    image: "images/AT28_실버_123_5.jpg",
+    stock: 5,
+    drawer: "",
+    note: "AT28(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT36",
+    length: 117,
+    color: "화이트",
+    price: "",
+    source: "",
+    image: "images/AT36_화이트_117_9.jpg",
+    stock: 9,
+    drawer: "",
+    note: "AT36(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT39",
+    length: 117,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT39_블랙_117_9.jpg",
+    stock: 9,
+    drawer: "",
+    note: "AT39(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT43",
+    length: 120,
+    color: "화이트",
+    price: "",
+    source: "",
+    image: "images/AT43_화이트_120_4.jpg",
+    stock: 4,
+    drawer: "",
+    note: "AT43(클락포인트) (⚠️ 품절/단종)",
+  },
+  {
+    type: "A타입",
+    model: "AT44",
+    length: 120,
+    color: "블랙",
+    price: "",
+    source: "",
+    image: "images/AT44_블랙_120_5.jpg",
+    stock: 5,
+    drawer: "",
+    note: "AT44(클락포인트) (⚠️ 품절/단종)",
+  },
+];
+
+function mergeSeeds(existing, seeds, makeEmpty, deletedKeys) {
+  const existingSources = new Set(existing.map((it) => it.source).filter(Boolean));
+  // source가 없는 시드(구매처 링크가 아예 없는 단종/절판 상품 등)는 model(제품명)로 중복 여부를 판단
+  const existingModels = new Set(existing.map((it) => it.model).filter(Boolean));
+  // 사용자가 명시적으로 삭제한 시드는(같은 source 또는 model 키로) 다시 추가하지 않음 — 삭제해도 F5하면 되살아나던 버그 수정.
+  const deleted = deletedKeys || new Set();
+  const seedKey = (s) => s.source || s.model;
+  const toAdd = seeds
+    .filter((s) => (s.source ? !existingSources.has(s.source) : s.model ? !existingModels.has(s.model) : true))
+    .filter((s) => !deleted.has(seedKey(s)))
+    .map((s) => ({ ...makeEmpty(), stock: 0, ...s }));
+  return toAdd.length ? [...toAdd, ...existing] : existing;
+}
+
+/* ---------------------------- 전체 제품 CSV 내보내기 (입출고 이력 제외) ---------------------------- */
+
+const EXPORT_COLUMNS = [
+  "분류",
+  "제품명",
+  "브랜드",
+  "색상",
+  "길이(mm, 분침기준)",
+  "샤프트길이",
+  "축종류",
+  "소음종류",
+  "추시계(진자형)",
+  "Reverse",
+  "가격(원)",
+  "재고수량",
+  "서랍번호",
+  "구매처링크",
+  "이미지링크",
+  "메모",
+];
+
+function csvEscape(v) {
+  const s = v === undefined || v === null ? "" : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function buildExportRow(item, kind) {
+  if (kind === "hand") {
+    return [
+      item.type || "",
+      item.model || "",
+      "",
+      item.color || "",
+      item.length || "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      item.price || "",
+      item.stock || 0,
+      item.drawer || "",
+      item.source || "",
+      item.image || "",
+      item.note || "",
+    ];
+  }
+  return [
+    item.category || "무브먼트",
+    item.model || "",
+    item.brand || "",
+    "",
+    "",
+    item.shaftLength || "",
+    item.axisType || "",
+    item.noiseType || "",
+    item.pendulum ? "Y" : "",
+    item.reverse ? "Y" : "",
+    item.price || "",
+    item.stock || 0,
+    item.drawer || "",
+    item.source || "",
+    item.image || "",
+    item.note || "",
+  ];
+}
+
+function exportAllToCSV(movements, hands) {
+  const byLength = (a, b) => (Number(a.length) || 0) - (Number(b.length) || 0);
+  const handsA = hands.filter((h) => h.type === "A타입").sort(byLength);
+  const handsB = hands.filter((h) => h.type === "B타입").sort(byLength);
+  const movs = movements.filter((m) => (m.category || "무브먼트") === "무브먼트");
+  const misc = movements.filter((m) => m.category === "기타");
+
+  const rows = [
+    EXPORT_COLUMNS,
+    ...handsA.map((h) => buildExportRow(h, "hand")),
+    ...handsB.map((h) => buildExportRow(h, "hand")),
+    ...movs.map((m) => buildExportRow(m, "movement")),
+    ...misc.map((m) => buildExportRow(m, "movement")),
+  ];
+  const csv = rows.map((r) => r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const today = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `시계부속_재고_${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------------------------- 분류 재지정(수정 화면에서 A/B타입·무브먼트·기타 이동) ---------------------------- */
+
+function toHandDraft(item, type) {
+  const isFromHand = item.type !== undefined;
+  return {
+    id: item.id || uid(),
+    type,
+    length: isFromHand ? item.length : "",
+    color: item.color || "블랙",
+    price: item.price || "",
+    source: item.source || "",
+    image: item.image || "",
+    stock: item.stock || 0,
+    drawer: item.drawer || "",
+    note: item.note || "",
+  };
+}
+
+function toMovementDraft(item, category) {
+  const isFromHand = item.type !== undefined;
+  const originHint = isFromHand
+    ? `[원래 시계바늘: ${[item.type, item.color, item.length ? `${item.length}mm` : ""].filter(Boolean).join(" ")}] `
+    : "";
+  return {
+    id: item.id || uid(),
+    category,
+    brand: !isFromHand && item.brand ? item.brand : "기타",
+    shaftLength: !isFromHand && item.shaftLength ? item.shaftLength : "14mm",
+    axisType: !isFromHand && item.axisType ? item.axisType : item.type === "B타입" ? "정공축" : "태양축",
+    noiseType: !isFromHand && item.noiseType ? item.noiseType : "무소음",
+    pendulum: Boolean(!isFromHand && item.pendulum),
+    reverse: Boolean(!isFromHand && item.reverse),
+    price: item.price || "",
+    source: item.source || "",
+    image: item.image || "",
+    stock: item.stock || 0,
+    drawer: item.drawer || "",
+    note: isFromHand ? originHint + (item.note || "") : item.note || "",
+  };
+}
+
+/* ---------------------------- storage (브라우저 localStorage) ---------------------------- */
+
+const LS_PREFIX = "cp_ledger_";
+
+async function loadAll() {
+  const keys = ["movements", "hands", "transactions", "infoItems", "deletedSeedKeys"];
+  const out = {};
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(LS_PREFIX + k);
+      out[k] = raw ? JSON.parse(raw) : [];
+    } catch {
+      out[k] = [];
+    }
+  }
+  return out;
+}
+
+async function saveKey(key, value) {
+  try {
+    localStorage.setItem(LS_PREFIX + key, JSON.stringify(value));
+  } catch (e) {
+    console.error("storage save failed", key, e);
+  }
+}
+
+function loadGithubSettingsLS() {
+  try {
+    const raw = localStorage.getItem(LS_PREFIX + "github_settings");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveGithubSettingsLS(s) {
+  try {
+    localStorage.setItem(LS_PREFIX + "github_settings", JSON.stringify(s));
+  } catch (e) {
+    console.error("storage save failed", "github_settings", e);
+  }
+}
+
+/* ---------------------------- UI atoms ---------------------------- */
+
+function StockBadge({ stock }) {
+  // 숫자 중심의 단순 재고 뱃지. stock==0 이면 빨간 톤, 낮으면 러스트, 충분하면 세이지.
+  const color = stock === 0 ? "#B0503A" : stock <= 2 ? "#C08A3E" : "#5B7B5A";
+  const bg = stock === 0 ? "#F5E4E0" : stock <= 2 ? "#F6ECD8" : "#E7EFE6";
+  const text = String(stock);
+  return (
+    <div
+      className="shrink-0 flex flex-col items-center justify-center rounded-lg"
+      style={{ width: 72, height: 72, backgroundColor: bg, border: `2px solid ${color}` }}
+    >
+      <span
+        className="font-extrabold leading-none"
+        style={{ color, fontSize: text.length > 2 ? 22 : 30, fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        {stock}
+      </span>
+      <span className="leading-tight font-semibold" style={{ color, fontSize: 10 }}>
+        재고
+      </span>
+    </div>
+  );
+}
+
+function DrawerBadge({ drawer }) {
+  // 실물 서랍에 붙이는 노랑 스티커(색상+큰 글씨)와 맞춰볼 수 있도록 앱에서도 크고 진하게 표시, 재고 뱃지와 동일한 사이즈
+  if (!drawer) return null;
+  const text = String(drawer);
+  return (
+    <div
+      className="shrink-0 flex flex-col items-center justify-center rounded-lg"
+      style={{ width: 72, height: 72, backgroundColor: "#F5C518", border: "2px solid #C99A00" }}
+      title={`서랍 ${text}`}
+    >
+      <span
+        className="font-extrabold leading-none"
+        style={{ color: "#1A1A1A", fontSize: text.length > 2 ? 22 : 30, fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        {text}
+      </span>
+      <span className="leading-tight font-semibold" style={{ color: "#1A1A1A", fontSize: 10 }}>
+        서랍No
+      </span>
+    </div>
+  );
+}
+
+function PriorityBadge({ priority }) {
+  // Info 탭 전용 — 재고수량 뱃지의 "초기 버전" 크기(v45 확대 이전)를 그대로 재사용
+  return (
+    <div
+      className="shrink-0 flex flex-col items-center justify-center rounded-lg px-3 py-1 min-w-[52px]"
+      style={{ backgroundColor: "#F6ECD8", border: "1px solid #C08A3E55" }}
+    >
+      <span className="text-lg font-bold leading-tight" style={{ color: "#C08A3E", fontFamily: "'IBM Plex Mono', monospace" }}>
+        {priority}
+      </span>
+      <span className="text-[9px] leading-tight" style={{ color: "#C08A3E" }}>
+        중요도
+      </span>
+    </div>
+  );
+}
+
+function ImgThumb({ src, alt, size = 88 }) {
+  const [broken, setBroken] = useState(false);
+  return (
+    <div
+      className="shrink-0 rounded border flex items-center justify-center overflow-hidden bg-[#FBF7EF]"
+      style={{ width: size, height: size, borderColor: "#BFAE8C" }}
+    >
+      {src && !broken ? (
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <ImageOff size={22} className="text-[#4F4030]" />
+      )}
+    </div>
+  );
+}
+
+function ImageLightbox({ src, alt, onClose }) {
+  if (!src) return null;
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-[#FBF7EF] rounded-lg border shadow-2xl p-3 max-w-[70vw] max-h-[70vh] flex flex-col"
+        style={{ borderColor: "#BFAE8C" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-end mb-2">
+          <button onClick={onClose}>
+            <X size={18} className="text-[#7A5230]" />
+          </button>
+        </div>
+        <img
+          src={src}
+          alt={alt}
+          className="max-w-full object-contain rounded"
+          style={{ maxHeight: "60vh", cursor: "zoom-out" }}
+          onClick={onClose}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, labelExtra, children }) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="font-medium flex items-center gap-1.5" style={{ color: "#463823" }}>
+        {label}
+        {labelExtra}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+const inputCls =
+  "px-2.5 py-1.5 rounded border bg-white/90 outline-none focus:ring-2 transition text-[#2B2420] text-sm";
+const inputStyle = { borderColor: "#BFAE8C" };
+const filterInputStyle = { borderColor: "#BFAE8C", fontSize: "12.5px" };
+
+const MOVEMENT_SUMMARY_FIELDS = [
+  { key: "model", label: "제품명" },
+  { key: "brand", label: "브랜드" },
+  { key: "shaftLength", label: "샤프트 길이" },
+  { key: "axisType", label: "축 종류" },
+  { key: "noiseType", label: "소음 종류" },
+  { key: "price", label: "가격" },
+  { key: "drawer", label: "서랍 번호" },
+  { key: "source", label: "구매처 링크" },
+  { key: "image", label: "이미지" },
+  { key: "note", label: "메모" },
+];
+
+const MISC_SUMMARY_FIELDS = [
+  { key: "model", label: "상품명" },
+  { key: "price", label: "가격" },
+  { key: "drawer", label: "서랍 번호" },
+  { key: "source", label: "구매처 링크" },
+  { key: "image", label: "이미지" },
+  { key: "note", label: "메모" },
+];
+
+const HAND_SUMMARY_FIELDS = [
+  { key: "model", label: "제품명" },
+  { key: "type", label: "타입(A/B)" },
+  { key: "length", label: "길이" },
+  { key: "color", label: "색상" },
+  { key: "price", label: "가격" },
+  { key: "drawer", label: "서랍 번호" },
+  { key: "source", label: "구매처 링크" },
+  { key: "image", label: "이미지" },
+  { key: "note", label: "메모" },
+];
+
+function findDuplicateBySource(source, items) {
+  const s = (source || "").trim();
+  if (!s || !items) return null;
+  return items.find((it) => (it.source || "").trim() === s) || null;
+}
+
+function describeItemShort(item, kind) {
+  if (kind === "movement") return `${item.brand} · ${item.shaftLength || "-"} · ${item.axisType || "-"} · ${item.noiseType || "-"} · 현재 재고 ${item.stock}개`;
+  return `${item.type} ${item.color} ${item.length || "-"}mm · 현재 재고 ${item.stock}개`;
+}
+
+function buildRegistrationConfirmMessage(f, fieldDefs, duplicate, kind) {
+  const filled = [];
+  const missing = [];
+  fieldDefs.forEach(({ key, label }) => {
+    const v = f[key];
+    const has = v !== undefined && v !== null && String(v).trim() !== "";
+    (has ? filled : missing).push(label);
+  });
+  let msg = duplicate
+    ? `⚠️ 같은 구매처 링크로 이미 등록된 상품이 있어요!\n(${describeItemShort(duplicate, kind)})\n\n재고만 늘리려는 거라면 취소하고 해당 항목의 "수정"에서 입출고해주세요.\n\n그래도 새로 등록할까요?\n\n`
+    : `이 내용으로 새로 등록할까요?\n\n`;
+  msg += `찾은 정보 (${filled.length}건): ${filled.join(", ") || "없음"}`;
+  if (missing.length) {
+    msg += `\n\n못 찾은 정보 (${missing.length}건): ${missing.join(", ")} — 등록 후 직접 입력해주세요.`;
+  }
+  return msg;
+}
+
+/* ---------------------------- Movement Form ---------------------------- */
+
+const SHAFT_LENGTH_MIN = 4;
+const SHAFT_LENGTH_MAX = 24;
+
+function MovementForm({ initial, onSave, onCancel, isEdit = false, existingItems = [] }) {
+  const [f, setF] = useState(initial);
+  const [shaftGuideOpen, setShaftGuideOpen] = useState(false);
+  const set = (k) => (e) =>
+    setF((s) => ({ ...s, [k]: e.target && e.target.type === "checkbox" ? e.target.checked : e.target.value }));
+
+  // 샤프트 길이 — 자유 입력(4~24mm 정수)이지만, blur/Enter 시점에만 clamp해서 커밋(매 키 입력마다 clamp하면
+  // 두 자리 수를 직접 타이핑할 때 첫 자리만으로 범위를 벗어나 튕겨나가는 문제가 있었음 — v68 가공계산기에서 발견/해결한 패턴 재사용)
+  const [shaftLengthRaw, setShaftLengthRaw] = useState(() => {
+    const n = parseInt(initial.shaftLength, 10);
+    return Number.isNaN(n) ? "" : String(n);
+  });
+  const commitShaftLength = () => {
+    const n = Math.round(Number(shaftLengthRaw));
+    if (shaftLengthRaw.trim() === "" || Number.isNaN(n)) {
+      const fallback = parseInt(f.shaftLength, 10) || SHAFT_LENGTH_MIN;
+      setShaftLengthRaw(String(fallback));
+      return;
+    }
+    const clamped = Math.min(SHAFT_LENGTH_MAX, Math.max(SHAFT_LENGTH_MIN, n));
+    setShaftLengthRaw(String(clamped));
+    setF((s) => ({ ...s, shaftLength: `${clamped}mm` }));
+  };
+
+  const handleSaveClick = () => {
+    const dup = isEdit ? null : findDuplicateBySource(f.source, existingItems);
+    const fields = f.category === "기타" ? MISC_SUMMARY_FIELDS : MOVEMENT_SUMMARY_FIELDS;
+    const msg = isEdit ? "변경한 내용으로 저장할까요?" : buildRegistrationConfirmMessage(f, fields, dup, "movement");
+    if (!window.confirm(msg)) return;
+    onSave(f);
+  };
+
+  if (f.category === "기타") {
+    return (
+      <div className="grid grid-cols-2 gap-3 p-4 rounded-lg border bg-[#FBF7EF]" style={{ borderColor: "#BFAE8C" }}>
+        <div className="col-span-2">
+          <ImageSourcePicker value={f.image} onChange={(img) => setF((s) => ({ ...s, image: img }))} />
+        </div>
+        <div className="col-span-2">
+          <Field label="상품명">
+            <input className={inputCls} style={inputStyle} value={f.model || ""} onChange={set("model")} />
+          </Field>
+        </div>
+        <Field label="구매처 링크">
+          <input className={inputCls} style={inputStyle} placeholder="https://..." value={f.source} onChange={set("source")} />
+        </Field>
+        <Field label="가격 (원)">
+          <input className={inputCls} style={inputStyle} type="number" value={f.price} onChange={set("price")} />
+        </Field>
+        <Field label="수량">
+          <input className={inputCls} style={inputStyle} type="number" value={f.stock} onChange={set("stock")} />
+        </Field>
+        <Field label="서랍 번호">
+          <input className={inputCls} style={inputStyle} placeholder="예: 3" value={f.drawer || ""} onChange={set("drawer")} />
+        </Field>
+        <div className="col-span-2">
+          <Field label="메모">
+            <input className={inputCls} style={inputStyle} value={f.note} onChange={set("note")} />
+          </Field>
+        </div>
+        <div className="col-span-2 flex justify-end gap-2 pt-1">
+          <button onClick={onCancel} className="px-3 py-1.5 rounded text-sm border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            취소
+          </button>
+          <button
+            onClick={handleSaveClick}
+            className="px-3 py-1.5 rounded text-sm text-white flex items-center gap-1.5"
+            style={{ backgroundColor: "#7A5230" }}
+          >
+            <Save size={14} /> 저장
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3 p-4 rounded-lg border bg-[#FBF7EF]" style={{ borderColor: "#BFAE8C" }}>
+      <div className="col-span-2">
+        <Field label="제품명">
+          <input className={inputCls} style={inputStyle} placeholder="예: 음표시계바늘 무브먼트" value={f.model || ""} onChange={set("model")} />
+        </Field>
+      </div>
+      <Field label="브랜드">
+        <input
+          type="text"
+          list="brand-options"
+          className={inputCls}
+          style={inputStyle}
+          value={f.brand}
+          onChange={set("brand")}
+          placeholder="예: 영타운"
+        />
+        <datalist id="brand-options">
+          {BRANDS.map((b) => (
+            <option key={b} value={b} />
+          ))}
+        </datalist>
+      </Field>
+      <Field
+        label="샤프트 길이"
+        labelExtra={
+          <button
+            type="button"
+            onClick={() => setShaftGuideOpen(true)}
+            style={{ color: "#7A5230" }}
+            title="샤프트 길이 비교표 보기"
+          >
+            <InfoIcon size={13} />
+          </button>
+        }
+      >
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            className={inputCls + " w-20"}
+            style={inputStyle}
+            value={shaftLengthRaw}
+            min={SHAFT_LENGTH_MIN}
+            max={SHAFT_LENGTH_MAX}
+            step={1}
+            onChange={(e) => setShaftLengthRaw(e.target.value)}
+            onBlur={commitShaftLength}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                commitShaftLength();
+                e.target.blur();
+              }
+            }}
+          />
+          <span className="text-sm" style={{ color: "#4F4030" }}>
+            mm ({SHAFT_LENGTH_MIN}~{SHAFT_LENGTH_MAX} 정수)
+          </span>
+        </div>
+      </Field>
+      {shaftGuideOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          onClick={() => setShaftGuideOpen(false)}
+        >
+          <div
+            className="bg-[#FBF7EF] rounded-lg border max-w-xl w-full p-4"
+            style={{ borderColor: "#BFAE8C" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-3">
+              <span className="font-semibold" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                샤프트 길이 비교표
+              </span>
+              <button onClick={() => setShaftGuideOpen(false)}>
+                <X size={18} className="text-[#7A5230]" />
+              </button>
+            </div>
+            <img src="shaft-guide.jpg" alt="무브먼트 샤프트 길이 비교" className="w-full rounded border" style={{ borderColor: "#BFAE8C" }} />
+          </div>
+        </div>
+      )}
+      <div className="col-span-2">
+        <span className="font-medium text-sm block mb-1" style={{ color: "#463823" }}>
+          옵션
+        </span>
+        <div className="flex items-center gap-5 flex-wrap">
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: "#463823" }}>
+            <input
+              type="checkbox"
+              checked={f.axisType === "태양축"}
+              onChange={(e) => setF((s) => ({ ...s, axisType: e.target.checked ? "태양축" : "정공축" }))}
+            />
+            태양축
+          </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: "#463823" }}>
+            <input
+              type="checkbox"
+              checked={f.noiseType === "무소음"}
+              onChange={(e) => setF((s) => ({ ...s, noiseType: e.target.checked ? "무소음" : "일반형" }))}
+            />
+            무소음
+          </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: "#463823" }}>
+            <input type="checkbox" checked={f.reverse} onChange={set("reverse")} />
+            Reverse
+          </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: "#463823" }}>
+            <input type="checkbox" checked={f.pendulum} onChange={set("pendulum")} />
+            추시계
+          </label>
+        </div>
+      </div>
+      <Field label="가격 (원)">
+        <input className={inputCls} style={inputStyle} type="number" value={f.price} onChange={set("price")} />
+      </Field>
+      <Field label="초기 재고 수량">
+        <input className={inputCls} style={inputStyle} type="number" value={f.stock} onChange={set("stock")} />
+      </Field>
+      <Field label="서랍 번호">
+        <input className={inputCls} style={inputStyle} placeholder="예: 3" value={f.drawer || ""} onChange={set("drawer")} />
+      </Field>
+      <Field label="구매처 링크">
+        <input className={inputCls} style={inputStyle} placeholder="https://..." value={f.source} onChange={set("source")} />
+      </Field>
+      <div className="col-span-2">
+        <ImageSourcePicker value={f.image} onChange={(img) => setF((s) => ({ ...s, image: img }))} />
+      </div>
+      <div className="col-span-2">
+        <Field label="메모">
+          <input className={inputCls} style={inputStyle} value={f.note} onChange={set("note")} />
+        </Field>
+      </div>
+      <div className="col-span-2 flex justify-end gap-2 pt-1">
+        <button onClick={onCancel} className="px-3 py-1.5 rounded text-sm border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+          취소
+        </button>
+        <button
+          onClick={() => {
+            const dup = isEdit ? null : findDuplicateBySource(f.source, existingItems);
+            const msg = isEdit
+              ? "변경한 내용으로 저장할까요?"
+              : buildRegistrationConfirmMessage(f, MOVEMENT_SUMMARY_FIELDS, dup, "movement");
+            if (!window.confirm(msg)) return;
+            onSave(f);
+          }}
+          className="px-3 py-1.5 rounded text-sm text-white flex items-center gap-1.5"
+          style={{ backgroundColor: "#7A5230" }}
+        >
+          <Save size={14} /> 저장
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HandForm({ initial, onSave, onCancel, isEdit = false, existingItems = [] }) {
+  const [f, setF] = useState(initial);
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+  return (
+    <div className="grid grid-cols-2 gap-3 p-4 rounded-lg border bg-[#FBF7EF]" style={{ borderColor: "#BFAE8C" }}>
+      <div className="col-span-2">
+        <Field label="제품명">
+          <input className={inputCls} style={inputStyle} placeholder="예: 음표시계바늘" value={f.model || ""} onChange={set("model")} />
+        </Field>
+      </div>
+      <Field label="타입">
+        <select className={inputCls} style={inputStyle} value={f.type} onChange={set("type")}>
+          {HAND_TYPES.map((t) => (
+            <option key={t}>{t}</option>
+          ))}
+        </select>
+      </Field>
+      <Field label="길이 (분침 기준, mm)">
+        <input className={inputCls} style={inputStyle} type="number" step="0.5" value={f.length} onChange={set("length")} />
+      </Field>
+      <Field label="색상">
+        <select className={inputCls} style={inputStyle} value={f.color} onChange={set("color")}>
+          {f.color && !HAND_COLORS.includes(f.color) && <option value={f.color}>{f.color}</option>}
+          {HAND_COLORS.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+      </Field>
+      <Field label="가격 (원)">
+        <input className={inputCls} style={inputStyle} type="number" value={f.price} onChange={set("price")} />
+      </Field>
+      <Field label="초기 재고 수량">
+        <input className={inputCls} style={inputStyle} type="number" value={f.stock} onChange={set("stock")} />
+      </Field>
+      <Field label="서랍 번호">
+        <input className={inputCls} style={inputStyle} placeholder="예: 3" value={f.drawer || ""} onChange={set("drawer")} />
+      </Field>
+      <Field label="구매처 링크">
+        <input className={inputCls} style={inputStyle} placeholder="https://..." value={f.source} onChange={set("source")} />
+      </Field>
+      <div className="col-span-2">
+        <ImageSourcePicker value={f.image} onChange={(img) => setF((s) => ({ ...s, image: img }))} />
+      </div>
+      <div className="col-span-2">
+        <Field label="메모">
+          <input className={inputCls} style={inputStyle} value={f.note} onChange={set("note")} />
+        </Field>
+      </div>
+      <div className="col-span-2 flex justify-end gap-2 pt-1">
+        <button onClick={onCancel} className="px-3 py-1.5 rounded text-sm border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+          취소
+        </button>
+        <button
+          onClick={() => {
+            const dup = isEdit ? null : findDuplicateBySource(f.source, existingItems);
+            const msg = isEdit
+              ? "변경한 내용으로 저장할까요?"
+              : buildRegistrationConfirmMessage(f, HAND_SUMMARY_FIELDS, dup, "hand");
+            if (!window.confirm(msg)) return;
+            onSave(f);
+          }}
+          className="px-3 py-1.5 rounded text-sm text-white flex items-center gap-1.5"
+          style={{ backgroundColor: "#7A5230" }}
+        >
+          <Save size={14} /> 저장
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Stock modal ---------------------------- */
+
+function StockModal({ item, kind, onClose, onCommit }) {
+  const [dir, setDir] = useState("in");
+  const [qty, setQty] = useState(1);
+  const [note, setNote] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const label = kind === "movement" ? `${item.brand} · ${item.shaftLength || "-"}` : `${item.type} ${item.length}mm`;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#FBF7EF] rounded-lg border w-full max-w-sm p-5" style={{ borderColor: "#BFAE8C" }}>
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <div className="text-xs uppercase tracking-wide" style={{ color: "#7A5230" }}>
+              입출고
+            </div>
+            <div className="font-semibold" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+              {label}
+            </div>
+          </div>
+          <button onClick={onClose}>
+            <X size={18} className="text-[#7A5230]" />
+          </button>
+        </div>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setDir("in")}
+            className={`flex-1 py-1.5 rounded text-sm flex items-center justify-center gap-1 border ${
+              dir === "in" ? "text-white" : ""
+            }`}
+            style={dir === "in" ? { backgroundColor: "#5B7B5A", borderColor: "#5B7B5A" } : { borderColor: "#BFAE8C", color: "#463823" }}
+          >
+            <ArrowDownCircle size={15} /> 입고
+          </button>
+          <button
+            onClick={() => setDir("out")}
+            className={`flex-1 py-1.5 rounded text-sm flex items-center justify-center gap-1 border ${
+              dir === "out" ? "text-white" : ""
+            }`}
+            style={dir === "out" ? { backgroundColor: "#B0503A", borderColor: "#B0503A" } : { borderColor: "#BFAE8C", color: "#463823" }}
+          >
+            <ArrowUpCircle size={15} /> 출고
+          </button>
+        </div>
+        <Field label="수량">
+          <input
+            className={inputCls}
+            style={inputStyle}
+            type="number"
+            min="1"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+          />
+        </Field>
+        <div className="h-2" />
+        <Field label="날짜">
+          <input
+            className={inputCls}
+            style={inputStyle}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </Field>
+        <div className="h-2" />
+        <Field label="메모 (선택)">
+          <input className={inputCls} style={inputStyle} value={note} onChange={(e) => setNote(e.target.value)} />
+        </Field>
+        {dir === "out" && Number(qty) > item.stock && (
+          <div className="mt-2 text-xs flex items-center gap-1" style={{ color: "#B0503A" }}>
+            <AlertTriangle size={13} /> 현재 재고({item.stock})보다 많은 수량입니다.
+          </div>
+        )}
+        <div className="flex justify-end gap-2 mt-4">
+          <button onClick={onClose} className="px-3 py-1.5 rounded text-sm border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            취소
+          </button>
+          <button
+            onClick={() => {
+              const q = Number(qty);
+              if (!q || q <= 0) return;
+              onCommit(dir, q, note, date);
+            }}
+            className="px-3 py-1.5 rounded text-sm text-white"
+            style={{ backgroundColor: "#7A5230" }}
+          >
+            확정
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Item card ---------------------------- */
+
+function MovementCard({ item, onEdit, onDelete, onStock }) {
+  const [zoomOpen, setZoomOpen] = useState(false);
+  return (
+    <div className="flex gap-3 p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
+      {item.source ? (
+        <a href={item.source} target="_blank" rel="noopener noreferrer" title="구매처 사이트 열기">
+          <ImgThumb src={item.image} alt={item.brand} />
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={() => item.image && setZoomOpen(true)}
+          className="shrink-0 p-0 border-0 bg-transparent"
+          style={{ cursor: item.image ? "zoom-in" : "default" }}
+          title={item.image ? "사진 확대 보기" : undefined}
+        >
+          <ImgThumb src={item.image} alt={item.brand} />
+        </button>
+      )}
+      {zoomOpen && <ImageLightbox src={item.image} alt={item.brand} onClose={() => setZoomOpen(false)} />}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            {item.category === "기타" ? (
+              <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                {item.model || "(상품명 미입력)"}
+              </div>
+            ) : (
+              <>
+                <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                  {item.model || item.brand} ·{" "}
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{item.shaftLength || "-"}</span>
+                </div>
+                <div className="text-xs mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5" style={{ color: "#5C4B36" }}>
+                  {item.model && <span>{item.brand}</span>}
+                  <span>{item.axisType}</span>
+                  <span>{item.noiseType}</span>
+                  {item.pendulum && (
+                    <span className="px-1.5 rounded" style={{ backgroundColor: "#E8DEC7", color: "#463823" }}>
+                      진자형
+                    </span>
+                  )}
+                  {item.reverse && (
+                    <span className="px-1.5 rounded" style={{ backgroundColor: "#E8DEC7", color: "#463823" }}>
+                      Reverse
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+            {item.price && (
+              <div className="text-xs mt-1" style={{ color: "#7A5230", fontFamily: "'IBM Plex Mono', monospace" }}>
+                ₩{Number(item.price).toLocaleString()}
+              </div>
+            )}
+            {item.note && <div className="text-xs mt-1 italic" style={{ color: "#4F4030" }}>{item.note}</div>}
+          </div>
+          <div className="flex items-center" style={{ gap: 19 }}>
+            <DrawerBadge drawer={item.drawer} />
+            <StockBadge stock={item.stock} />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mt-2">
+          {item.source && (
+            <a
+              href={item.source}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs flex items-center gap-1 underline"
+              style={{ color: "#463823" }}
+            >
+              구매처 <ExternalLink size={11} />
+            </a>
+          )}
+          {item.image && (
+            <a
+              href={item.image}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs flex items-center gap-1 underline"
+              style={{ color: "#463823" }}
+            >
+              이미지 <ExternalLink size={11} />
+            </a>
+          )}
+          <button onClick={() => onStock(item)} className="text-xs px-2 py-1 rounded border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            입출고
+          </button>
+          <button onClick={() => onEdit(item)} className="text-xs px-2 py-1 rounded border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            수정
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm("정말 삭제할까요? 삭제하면 되돌릴 수 없어요.")) onDelete(item.id);
+            }}
+            className="text-xs px-2 py-1 rounded border ml-auto"
+            style={{ borderColor: "#BFAE8C", color: "#B0503A" }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HandCard({ item, onEdit, onDelete, onStock }) {
+  const [zoomOpen, setZoomOpen] = useState(false);
+  return (
+    <div className="flex gap-3 p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
+      {item.source ? (
+        <a href={item.source} target="_blank" rel="noopener noreferrer" title="구매처 사이트 열기">
+          <ImgThumb src={item.image} alt={item.model || item.color} />
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={() => item.image && setZoomOpen(true)}
+          className="shrink-0 p-0 border-0 bg-transparent"
+          style={{ cursor: item.image ? "zoom-in" : "default" }}
+          title={item.image ? "사진 확대 보기" : undefined}
+        >
+          <ImgThumb src={item.image} alt={item.model || item.color} />
+        </button>
+      )}
+      {zoomOpen && <ImageLightbox src={item.image} alt={item.model || item.color} onClose={() => setZoomOpen(false)} />}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+              {item.model || item.type} ·{" "}
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{item.length || "-"}mm</span>
+            </div>
+            <div className="text-xs mt-0.5" style={{ color: "#5C4B36" }}>
+              {item.color || "색상/설명 미입력"}
+            </div>
+            {item.price && (
+              <div className="text-xs mt-1" style={{ color: "#7A5230", fontFamily: "'IBM Plex Mono', monospace" }}>
+                ₩{Number(item.price).toLocaleString()}
+              </div>
+            )}
+            {item.note && <div className="text-xs mt-1 italic" style={{ color: "#4F4030" }}>{item.note}</div>}
+          </div>
+          <div className="flex items-center" style={{ gap: 19 }}>
+            <DrawerBadge drawer={item.drawer} />
+            <StockBadge stock={item.stock} />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mt-2">
+          {item.source && (
+            <a
+              href={item.source}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs flex items-center gap-1 underline"
+              style={{ color: "#463823" }}
+            >
+              구매처 <ExternalLink size={11} />
+            </a>
+          )}
+          {item.image && (
+            <a
+              href={item.image}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs flex items-center gap-1 underline"
+              style={{ color: "#463823" }}
+            >
+              이미지 <ExternalLink size={11} />
+            </a>
+          )}
+          <button onClick={() => onStock(item)} className="text-xs px-2 py-1 rounded border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            입출고
+          </button>
+          <button onClick={() => onEdit(item)} className="text-xs px-2 py-1 rounded border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            수정
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm("정말 삭제할까요? 삭제하면 되돌릴 수 없어요.")) onDelete(item.id);
+            }}
+            className="text-xs px-2 py-1 rounded border ml-auto"
+            style={{ borderColor: "#BFAE8C", color: "#B0503A" }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Info 탭 (자주 쓰는 사이트/문서/이미지 자료) ---------------------------- */
+
+function InfoItemForm({ initial, onSave, onCancel, isEdit = false, infoItems = [] }) {
+  const [f, setF] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const fileInputRef = useRef(null);
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+
+  // 신규 등록일 때만: 종류를 고를 때마다 "같은 종류 등록건수 + 1"을 중요도 기본값으로 채워줌
+  useEffect(() => {
+    if (isEdit) return;
+    const count = infoItems.filter((i) => i.kind === f.kind).length;
+    setF((s) => ({ ...s, priority: count + 1 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.kind, isEdit]);
+
+  const handleDocFile = async (file) => {
+    if (!file) return;
+    const MAX_WARN_BYTES = 3 * 1024 * 1024;
+    if (file.size > MAX_WARN_BYTES) {
+      const mb = (file.size / (1024 * 1024)).toFixed(1);
+      if (
+        !window.confirm(
+          `선택한 파일이 ${mb}MB로 꽤 커요. 이대로 첨부하면 앱 저장공간을 많이 차지해서 느려질 수 있어요.\n\n그래도 첨부할까요? (파일을 다른 곳에 올려두고 링크만 등록하는 방법도 있어요)`
+        )
+      )
+        return;
+    }
+    setBusy(true);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setF((s) => ({ ...s, url: dataUrl, fileName: file.name }));
+    } catch (e) {
+      window.alert("파일을 읽지 못했어요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-3 p-4 rounded-lg border bg-[#FBF7EF]" style={{ borderColor: "#BFAE8C" }}>
+      <Field label="종류">
+        <select className={inputCls} style={inputStyle} value={f.kind} onChange={(e) => setF((s) => ({ ...s, kind: e.target.value }))}>
+          {INFO_KINDS.map((k) => (
+            <option key={k}>{k}</option>
+          ))}
+        </select>
+      </Field>
+      <Field label="중요도">
+        <input className={inputCls} style={inputStyle} type="number" value={f.priority} onChange={set("priority")} />
+      </Field>
+      <div className="col-span-2">
+        <Field label="제목">
+          <input className={inputCls} style={inputStyle} placeholder="예: 샤프트 크기 비교 매뉴얼" value={f.title} onChange={set("title")} />
+        </Field>
+      </div>
+      <div className="col-span-2">
+        <Field label="간단 소개 (선택)">
+          <textarea
+            className={inputCls + " resize-y"}
+            style={inputStyle}
+            rows={3}
+            placeholder="이 사이트/자료가 무엇인지 간단히 적어주세요 (줄바꿈 가능, 3줄 내외 추천)"
+            value={f.description}
+            onChange={set("description")}
+          />
+        </Field>
+      </div>
+      {f.kind === "이미지" ? (
+        <div className="col-span-2">
+          <ImageSourcePicker value={f.url} onChange={(img) => setF((s) => ({ ...s, url: img, fileName: "" }))} label="이미지 파일" />
+        </div>
+      ) : (
+        <div className="col-span-2">
+          <Field label={f.kind === "웹사이트" ? "웹사이트 링크" : "문서 링크 또는 파일 첨부"}>
+            {f.kind === "문서" && f.fileName ? (
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border bg-white/90" style={{ borderColor: "#BFAE8C" }}>
+                <FileImage size={14} style={{ color: "#7A5230" }} className="shrink-0" />
+                <span className="flex-1 text-sm truncate" style={{ color: "#2B2420" }}>
+                  {f.fileName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setF((s) => ({ ...s, url: "", fileName: "" }))}
+                  className="text-xs underline shrink-0"
+                  style={{ color: "#B0503A" }}
+                >
+                  첨부 해제
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  className={inputCls + " flex-1"}
+                  style={inputStyle}
+                  placeholder={f.kind === "웹사이트" ? "https://..." : "https://... 또는 D:\\문서\\매뉴얼.pdf"}
+                  value={f.url}
+                  onChange={set("url")}
+                />
+                {f.kind === "문서" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                      disabled={busy}
+                      className="px-2.5 py-1.5 rounded text-sm border whitespace-nowrap flex items-center gap-1 shrink-0"
+                      style={{ borderColor: "#BFAE8C", color: "#463823" }}
+                    >
+                      <UploadCloud size={14} /> {busy ? "읽는 중..." : "내 PC에서 선택"}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.hwp"
+                      className="hidden"
+                      onChange={(e) => {
+                        handleDocFile(e.target.files && e.target.files[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            )}
+          </Field>
+        </div>
+      )}
+      <div className="col-span-2 flex justify-end gap-2 pt-1">
+        <button onClick={onCancel} className="px-3 py-1.5 rounded text-sm border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+          취소
+        </button>
+        <button
+          onClick={() => {
+            if (!f.title.trim() || !f.url.trim()) {
+              window.alert("제목과 링크(또는 이미지/파일)를 입력해주세요.");
+              return;
+            }
+            onSave(f);
+          }}
+          className="px-3 py-1.5 rounded text-sm text-white flex items-center gap-1.5"
+          style={{ backgroundColor: "#7A5230" }}
+        >
+          <Save size={14} /> 저장
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InfoItemCard({ item, onEdit, onDelete }) {
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const colors = INFO_KIND_COLORS[item.kind] || { bg: "#E8DEC7", text: "#463823" };
+  return (
+    <div className="flex gap-3 p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
+      {item.kind === "이미지" && (
+        <button
+          type="button"
+          onClick={() => item.url && setZoomOpen(true)}
+          className="shrink-0 p-0 border-0 bg-transparent"
+          style={{ cursor: item.url ? "zoom-in" : "default" }}
+          title={item.url ? "사진 확대 보기" : undefined}
+        >
+          <ImgThumb src={item.url} alt={item.title} size={56} />
+        </button>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold shrink-0" style={{ backgroundColor: colors.bg, color: colors.text }}>
+                {item.kind}
+              </span>
+              {item.kind === "이미지" ? (
+                <span className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                  {item.title}
+                </span>
+              ) : (
+                <a
+                  href={normalizeFileUrl(item.url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={item.fileName || undefined}
+                  onClick={(e) => {
+                    // 첨부파일(download)이 아닌 일반 웹사이트/문서 링크는 window.open으로 강제 — 일부 환경에서
+                    // <a target="_blank">가 새 탭이 opener 창의 화면 확대(줌) 배율을 물려받는 문제가 보고되어,
+                    // noopener만으로 부족할 경우를 대비해 진짜 독립적인 새 창을 명시적으로 요청한다.
+                    if (!item.fileName) {
+                      e.preventDefault();
+                      window.open(normalizeFileUrl(item.url), "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  className="font-semibold text-[15px] underline"
+                  style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}
+                >
+                  {item.title}
+                </a>
+              )}
+            </div>
+            {item.description && (
+              <div className="text-xs mt-1 whitespace-pre-line" style={{ color: "#5C4B36" }}>
+                {item.description}
+              </div>
+            )}
+            {item.kind !== "이미지" && item.fileName && (
+              <div className="text-xs mt-1 truncate flex items-center gap-1" style={{ color: "#4F4030" }}>
+                <FileImage size={11} className="shrink-0" />
+                {item.fileName}
+              </div>
+            )}
+          </div>
+          <PriorityBadge priority={item.priority} />
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={() => onEdit(item)}
+            className="text-xs px-2 py-1 rounded border ml-auto"
+            style={{ borderColor: "#BFAE8C", color: "#463823" }}
+          >
+            수정
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm("정말 삭제할까요? 삭제하면 되돌릴 수 없어요.")) onDelete(item.id);
+            }}
+            className="text-xs px-2 py-1 rounded border"
+            style={{ borderColor: "#BFAE8C", color: "#B0503A" }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+      {zoomOpen && <ImageLightbox src={item.url} alt={item.title} onClose={() => setZoomOpen(false)} />}
+    </div>
+  );
+}
+
+/* ---------------------------- GitHub upload ---------------------------- */
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || "";
+      const base64 = String(result).split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("파일을 읽지 못했어요."));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Info 탭 문서 첨부용 — mime 타입이 포함된 완전한 data URL을 그대로 반환(첨부 파일을 링크 클릭만으로 열 수 있게)
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("파일을 읽지 못했어요."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function resizeImageToDataUrl(file, { maxDim = 1000, quality = 0.82 } = {}) {
+  return new Promise((resolve) => {
+    const fallback = () => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    };
+    try {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch {
+          fallback();
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        fallback();
+      };
+      img.src = objectUrl;
+    } catch {
+      fallback();
+    }
+  });
+}
+
+async function githubUploadImage(settings, file) {
+  const { owner, repo, token, branch } = settings;
+  if (!owner || !repo || !token) {
+    throw new Error("GitHub 설정(계정/저장소/토큰)이 비어있어요. 설정 버튼을 눌러 입력해주세요.");
+  }
+  const base64 = await fileToBase64(file);
+  const extMatch = /\.([a-zA-Z0-9]+)$/.exec(file.name || "");
+  const ext = (extMatch ? extMatch[1] : "jpg").toLowerCase();
+  const filename = `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const path = `images/${filename}`;
+  const branchName = branch || "main";
+
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: `Add ${filename} via AI등록`,
+        content: base64,
+        branch: branchName,
+      }),
+    }
+  );
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`GitHub 업로드 실패 (${res.status}). ${t.slice(0, 200)}`);
+  }
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${branchName}/${path}`;
+}
+
+/* ---------------------------- Image Source Picker ---------------------------- */
+/* 붙여넣기(클립보드) / 파일 업로드(드래그 포함) / URL 직접입력 / GitHub 갤러리 선택을
+   한 곳에서 지원하는 공용 이미지 입력 컴포넌트.
+   GitHub 연동(owner/repo/token)이 있으면 백그라운드로 업로드해 짧은 URL로 승격시키고,
+   없으면 리사이즈한 base64 데이터 URL을 그대로 값으로 사용한다(항상 동작 보장). */
+
+function ImageSourcePicker({ value, onChange, label = "이미지" }) {
+  const gh = React.useContext(GithubSettingsContext);
+  const ghReady = Boolean(gh.owner && gh.repo);
+  const uploadReady = Boolean(gh.owner && gh.repo && gh.token);
+
+  const [urlText, setUrlText] = useState(value && value.startsWith("http") ? value : "");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [gallery, setGallery] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [galleryError, setGalleryError] = useState("");
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setUrlText(value && value.startsWith("http") ? value : "");
+  }, [value]);
+
+  const handleBlob = useCallback(
+    async (blob) => {
+      if (!blob || !blob.type || !blob.type.startsWith("image/")) {
+        setError("이미지 파일이 아니에요.");
+        return;
+      }
+      setError("");
+      const ext = (blob.type.split("/")[1] || "png").toLowerCase();
+      const namedFile = blob.name ? blob : new File([blob], `pasted.${ext}`, { type: blob.type });
+
+      const dataUrl = await resizeImageToDataUrl(namedFile);
+      if (dataUrl) onChange(dataUrl);
+
+      if (uploadReady) {
+        setUploading(true);
+        try {
+          const url = await githubUploadImage(gh, namedFile);
+          onChange(url);
+        } catch (e) {
+          setError((e && e.message) || "GitHub 업로드 실패 — 이미지는 이 기기에 직접 저장됐어요.");
+        } finally {
+          setUploading(false);
+        }
+      }
+    },
+    [gh, uploadReady, onChange]
+  );
+
+  // 등록/수정 폼이 열려있는 동안엔 화면 어디를 클릭했든 Ctrl+V로 바로 이미지가 붙여넣기 되도록
+  useEffect(() => {
+    const handler = (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.kind === "file" && item.type && item.type.startsWith("image/")) {
+          e.preventDefault();
+          const blob = item.getAsFile();
+          if (blob) handleBlob(blob);
+          return;
+        }
+      }
+    };
+    window.addEventListener("paste", handler);
+    return () => window.removeEventListener("paste", handler);
+  }, [handleBlob]);
+
+  const onPaste = (e) => {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.kind === "file" && item.type && item.type.startsWith("image/")) {
+        e.preventDefault();
+        const blob = item.getAsFile();
+        if (blob) handleBlob(blob);
+        return;
+      }
+    }
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file && file.type && file.type.startsWith("image/")) handleBlob(file);
+    else setError("이미지 파일이 아니에요.");
+  };
+
+  const loadGallery = useCallback(async () => {
+    if (!ghReady) return;
+    setGalleryLoading(true);
+    setGalleryError("");
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/images?ref=${gh.branch || "main"}`,
+        {
+          headers: {
+            Accept: "application/vnd.github+json",
+            ...(gh.token ? { Authorization: `Bearer ${gh.token}` } : {}),
+          },
+        }
+      );
+      if (!res.ok) throw new Error(`목록을 못 가져왔어요 (${res.status})`);
+      const data = await res.json();
+      const files = (Array.isArray(data) ? data : [])
+        .filter((f) => f.type === "file" && /\.(jpe?g|png|gif|webp)$/i.test(f.name))
+        .map((f) => ({ name: f.name, downloadUrl: f.download_url, sha: f.sha }))
+        .sort((a, b) => (a.name < b.name ? 1 : -1));
+      setGallery(files);
+    } catch (e) {
+      setGalleryError(e.message || "GitHub 이미지 목록을 불러오지 못했어요.");
+    } finally {
+      setGalleryLoading(false);
+    }
+  }, [ghReady, gh]);
+
+  const toggleGallery = () => {
+    const next = !galleryOpen;
+    setGalleryOpen(next);
+    if (next && gallery.length === 0) loadGallery();
+  };
+
+  const statusNote = value
+    ? value.startsWith("data:")
+      ? "브라우저에 직접 저장됨(용량 절약을 위해 축소됨)"
+      : value.includes("raw.githubusercontent.com")
+      ? "GitHub에 저장됨"
+      : "외부 URL 사용 중"
+    : "";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-medium" style={{ color: "#463823" }}>
+        {label}
+      </span>
+      <div className="flex gap-3 items-start">
+        <ImgThumb src={value} alt={label} size={72} />
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files && e.target.files[0];
+              if (f) handleBlob(f);
+              e.target.value = "";
+            }}
+          />
+          <div
+            tabIndex={0}
+            onPaste={onPaste}
+            onDrop={onDrop}
+            onDragOver={(e) => e.preventDefault()}
+            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            className="flex items-center justify-center gap-1.5 py-2.5 rounded border-2 border-dashed cursor-pointer text-center outline-none focus:ring-2"
+            style={{ borderColor: "#BFAE8C", backgroundColor: "#FBF7EF" }}
+          >
+            <ClipboardPaste size={15} className="text-[#7A5230]" />
+            <span className="text-xs" style={{ color: "#463823" }}>
+              클릭해서 파일 선택 · 이 화면 아무 곳에서나 Ctrl+V로 붙여넣기 · 끌어놓기
+            </span>
+          </div>
+          <input
+            className={inputCls}
+            style={inputStyle}
+            placeholder="https://... (URL 직접 입력)"
+            value={urlText}
+            onChange={(e) => {
+              setUrlText(e.target.value);
+              onChange(e.target.value);
+            }}
+          />
+          <div className="flex items-center gap-2 flex-wrap">
+            {value && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange("");
+                  setUrlText("");
+                  setError("");
+                }}
+                className="text-xs px-2 py-0.5 rounded border flex items-center gap-1"
+                style={{ borderColor: "#BFAE8C", color: "#B0503A" }}
+              >
+                <X size={11} /> 지우기
+              </button>
+            )}
+            {ghReady && (
+              <button
+                type="button"
+                onClick={toggleGallery}
+                className="text-xs px-2 py-0.5 rounded border flex items-center gap-1"
+                style={{ borderColor: "#BFAE8C", color: "#463823" }}
+              >
+                <FileImage size={11} /> GitHub 갤러리에서 선택
+              </button>
+            )}
+            {uploading && (
+              <span className="text-xs" style={{ color: "#7A5230" }}>
+                GitHub에 업로드 중...
+              </span>
+            )}
+            {statusNote && !uploading && (
+              <span className="text-xs" style={{ color: "#4F4030" }}>
+                {statusNote}
+              </span>
+            )}
+          </div>
+          {error && (
+            <div className="text-xs flex items-center gap-1" style={{ color: "#B0503A" }}>
+              <AlertTriangle size={12} /> {error}
+            </div>
+          )}
+          {galleryOpen && (
+            <div className="flex flex-col gap-2 p-2 rounded border" style={{ borderColor: "#BFAE8C" }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: "#5C4B36" }}>
+                  images/ 폴더
+                </span>
+                <button
+                  type="button"
+                  onClick={loadGallery}
+                  disabled={galleryLoading}
+                  className="text-xs px-2 py-0.5 rounded border"
+                  style={{ borderColor: "#BFAE8C", color: "#463823" }}
+                >
+                  {galleryLoading ? "불러오는 중..." : "새로고침"}
+                </button>
+              </div>
+              {galleryError && (
+                <div className="text-xs flex items-center gap-1" style={{ color: "#B0503A" }}>
+                  <AlertTriangle size={12} /> {galleryError}
+                </div>
+              )}
+              {!galleryLoading && !galleryError && gallery.length === 0 && (
+                <div className="text-xs text-center py-2" style={{ color: "#4F4030" }}>
+                  폴더가 비어있어요.
+                </div>
+              )}
+              <div className="grid grid-cols-4 gap-2">
+                {gallery.map((f) => (
+                  <button
+                    type="button"
+                    key={f.sha}
+                    onClick={() => {
+                      onChange(f.downloadUrl);
+                      setGalleryOpen(false);
+                    }}
+                    className="flex flex-col items-center gap-1 p-1 rounded border"
+                    style={{ borderColor: "#BFAE8C" }}
+                  >
+                    <ImgThumb src={f.downloadUrl} alt={f.name} size={56} />
+                    <span className="text-[10px] truncate w-full text-center" style={{ color: "#5C4B36" }}>
+                      {f.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Settings Modal ---------------------------- */
+
+function SettingsModal({ initial, onClose, onSave }) {
+  const [owner, setOwner] = useState(initial.owner || "");
+  const [repo, setRepo] = useState(initial.repo || "");
+  const [branch, setBranch] = useState(initial.branch || "main");
+  const [token, setToken] = useState(initial.token || "");
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#FBF7EF] rounded-lg border w-full max-w-sm p-5" style={{ borderColor: "#BFAE8C" }}>
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <div className="text-xs uppercase tracking-wide" style={{ color: "#7A5230" }}>
+              연결 설정
+            </div>
+            <div className="font-semibold" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+              GitHub 이미지 저장소
+            </div>
+          </div>
+          <button onClick={onClose}>
+            <X size={18} className="text-[#7A5230]" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Field label="GitHub 계정명 (owner)">
+            <input className={inputCls} style={inputStyle} placeholder="예: hkd1811" value={owner} onChange={(e) => setOwner(e.target.value)} />
+          </Field>
+          <Field label="저장소 이름 (repo)">
+            <input className={inputCls} style={inputStyle} placeholder="예: clock-parts-inventory" value={repo} onChange={(e) => setRepo(e.target.value)} />
+          </Field>
+          <Field label="브랜치">
+            <input className={inputCls} style={inputStyle} placeholder="main" value={branch} onChange={(e) => setBranch(e.target.value)} />
+          </Field>
+          <Field label="Fine-grained 토큰 (github_pat_...)">
+            <input
+              className={inputCls}
+              style={inputStyle}
+              type="password"
+              placeholder="github_pat_로 시작하는 토큰"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+            />
+          </Field>
+          <div className="text-xs" style={{ color: "#4F4030" }}>
+            토큰은 이 브라우저(localStorage)에만 저장되고, 이미지 업로드 요청 시에만 사용돼요.
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-4">
+          <button onClick={onClose} className="px-3 py-1.5 rounded text-sm border" style={{ borderColor: "#BFAE8C", color: "#463823" }}>
+            취소
+          </button>
+          <button
+            onClick={() => onSave({ owner: owner.trim(), repo: repo.trim(), branch: branch.trim() || "main", token: token.trim() })}
+            className="px-3 py-1.5 rounded text-sm text-white flex items-center gap-1.5"
+            style={{ backgroundColor: "#7A5230" }}
+          >
+            <Save size={14} /> 저장
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Quick Add Panel ---------------------------- */
+
+function QuickAddPanel({ githubSettings, onOpenSettings, onSaveMovement, onSaveHand, existingMovements = [], existingHands = [] }) {
+  const [imageUrl, setImageUrl] = useState("");
+  const [link, setLink] = useState("");
+  const [kindGuess, setKindGuess] = useState("A타입"); // A타입 | B타입 | 무브먼트 | 기타
+  const [colorGuess, setColorGuess] = useState("블랙");
+  const [status, setStatus] = useState("idle"); // idle | error | ready
+  const [statusMsg, setStatusMsg] = useState("");
+  const [draft, setDraft] = useState(null);
+
+  const ghReady = Boolean(githubSettings.owner && githubSettings.repo);
+
+  const CLOCKPOINT_BASE = "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=";
+
+  const handleImageChange = (url) => {
+    setImageUrl(url);
+    const m = /\/(\d+)\.[a-zA-Z0-9]+(?:\?.*)?$/.exec(url || "");
+    if (m) setLink(CLOCKPOINT_BASE + m[1]);
+  };
+
+  const reset = () => {
+    setImageUrl("");
+    setLink("");
+    setColorGuess("블랙");
+    setDraft(null);
+    setStatus("idle");
+    setStatusMsg("");
+  };
+
+  const handleRegister = () => {
+    if (!imageUrl.trim()) {
+      setStatus("error");
+      setStatusMsg("이미지를 먼저 등록해주세요.");
+      return;
+    }
+    if (!link.trim()) {
+      setStatus("error");
+      setStatusMsg("웹사이트 링크를 입력해주세요.");
+      return;
+    }
+
+    const isHandKind = kindGuess === "A타입" || kindGuess === "B타입";
+    if (!isHandKind) {
+      setDraft({
+        kind: "movement",
+        base: {
+          ...emptyMovement(kindGuess),
+          source: link.trim(),
+          image: imageUrl.trim(),
+        },
+      });
+    } else {
+      setDraft({
+        kind: "hand",
+        base: {
+          ...emptyHand(),
+          type: kindGuess,
+          color: colorGuess,
+          source: link.trim(),
+          image: imageUrl.trim(),
+        },
+      });
+    }
+
+    setStatus("ready");
+    setStatusMsg("이미지와 링크를 등록했어요. 아래에서 상세 정보를 직접 입력해주세요.");
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {!ghReady && (
+        <div
+          className="text-xs px-3 py-2 rounded flex items-center gap-2"
+          style={{ backgroundColor: "#F3E3D3", color: "#7A5230" }}
+        >
+          <AlertTriangle size={13} />
+          GitHub을 연결하면 이미지가 자동으로 짧은 URL로 업로드돼요(선택사항, 지금도 붙여넣기·파일로 바로 등록 가능).
+          <button onClick={onOpenSettings} className="underline font-medium">
+            설정하기
+          </button>
+        </div>
+      )}
+
+      {!draft && (
+        <div className="flex flex-col gap-3 p-4 rounded-lg border bg-white/70" style={{ borderColor: "#BFAE8C" }}>
+          <Field label="분류">
+            <div className="flex gap-2 flex-wrap">
+              {["A타입", "B타입", "무브먼트", "기타"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setKindGuess(c)}
+                  className="flex-1 py-1.5 rounded text-sm border min-w-[70px]"
+                  style={
+                    kindGuess === c
+                      ? { backgroundColor: "#7A5230", color: "white", borderColor: "#7A5230" }
+                      : { borderColor: "#BFAE8C", color: "#463823" }
+                  }
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <ImageSourcePicker value={imageUrl} onChange={handleImageChange} label="이미지" />
+
+          <Field label="웹사이트 링크 (goodsNo 파일이면 자동 채워짐)">
+            <input
+              className={inputCls}
+              style={inputStyle}
+              placeholder="https://..."
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+            />
+          </Field>
+
+          {(kindGuess === "A타입" || kindGuess === "B타입") && (
+            <Field label="색상 (같은 상품이라도 사이트에서 색상별로 따로 구매하는 경우가 많아요)">
+              <select className={inputCls} style={inputStyle} value={colorGuess} onChange={(e) => setColorGuess(e.target.value)}>
+                {HAND_COLORS.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+          )}
+
+          <button
+            onClick={handleRegister}
+            className="mt-1 py-2 rounded text-sm text-white flex items-center justify-center gap-2"
+            style={{ backgroundColor: "#7A5230" }}
+          >
+            <Link2 size={15} />
+            등록 진행
+          </button>
+
+          {statusMsg && status === "error" && (
+            <div className="text-xs flex items-center gap-1" style={{ color: "#B0503A" }}>
+              <AlertTriangle size={13} /> {statusMsg}
+            </div>
+          )}
+        </div>
+      )}
+
+      {draft && (
+        <div className="flex flex-col gap-2">
+          <div
+            className="text-xs px-3 py-2 rounded flex items-center gap-2"
+            style={{ backgroundColor: "#E7EFE6", color: "#5B7B5A" }}
+          >
+            <CheckCircle2 size={13} />
+            {statusMsg}
+          </div>
+          {draft.kind === "movement" ? (
+            <MovementForm
+              initial={draft.base}
+              existingItems={existingMovements}
+              onSave={(f) => {
+                onSaveMovement(f);
+                reset();
+              }}
+              onCancel={reset}
+            />
+          ) : (
+            <HandForm
+              initial={draft.base}
+              existingItems={existingHands}
+              onSave={(f) => {
+                onSaveHand(f);
+                reset();
+              }}
+              onCancel={reset}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const CNC_DIAGRAM_MARGIN_MM = 25; // 무브먼트 양옆 여유폭(참고 이미지 비율 기준, 고정값)
+const CNC_SHAFT_WIDTH_MM = 8;
+const CNC_HOLE_CLEARANCE_MM = 2; // 조립 여유 — 관통홀은 샤프트 지름보다 이만큼 더 크게 뚫어야 함(예: 샤프트 6mm → 홀 8mm)
+const CNC_TOP_FIXED_PX = 105; // 나무판 윗면(시계판/앞면) y좌표 자체는 고정 기준점 — 판재두께/가공깊이가 바뀌어도 이 좌표는 절대 안 움직임.
+// 판재두께(T)와 무관한 고정 배율. 예전엔 T에 따라 pxPerMm이 달라지고, 그걸 다시 CSS width로 눌러 맞추는 이중 스케일링 때문에
+// 화면상 originY(윗면)까지의 실제 픽셀 거리가 T마다 달라져서 "이미지가 가라앉는" 것처럼 보였음 — 배율을 고정하고 SVG를 원본 크기 그대로
+// 렌더링(CSS width로 다시 축소하지 않음)하면 원점의 화면 좌표가 항상 동일해짐. 프레임 20% 확장에 맞춰 106mm 보드폭이 약 432px가 되도록 설정.
+const CNC_PX_PER_MM = 3.7;
+
+// VBA 스핀버튼 스타일 — 값 입력칸 + 위/아래 버튼(클릭당 step만큼 증감)
+// 입력칸은 로컬 버퍼(raw)에 자유롭게 타이핑하게 하고, blur/Enter 시점에만 clamp해서 커밋한다.
+// (매 키 입력마다 즉시 clamp하면, 예를 들어 "30"을 입력할 때 첫 글자 "3"만으로도 min/max에 걸려 튕겨나가면서
+//  자릿수가 긴 값을 직접 타이핑으로 입력할 수 없게 되는 버그가 있었음 — 스핀 버튼(▲▼)은 그대로 즉시 clamp)
+function CncSpinField({ label, value, onChange, min, max, step = 0.5 }) {
+  const [raw, setRaw] = useState(String(value));
+  useEffect(() => {
+    setRaw(String(value));
+  }, [value]);
+
+  const clamp = (v) => {
+    let n = Math.round(v / step) * step;
+    if (min !== undefined) n = Math.max(n, min);
+    if (max !== undefined) n = Math.min(n, max);
+    return Math.round(n * 10) / 10;
+  };
+
+  const commitRaw = () => {
+    const n = Number(raw);
+    if (raw.trim() !== "" && !Number.isNaN(n)) {
+      onChange(clamp(n));
+    } else {
+      setRaw(String(value));
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-1 shrink-0">
+      <span className="text-[18px] font-semibold text-center" style={{ color: "#463823" }}>
+        {label}
+      </span>
+      <input
+        type="number"
+        className="w-16 text-center text-sm rounded border py-1"
+        style={{ borderColor: "#BFAE8C" }}
+        value={raw}
+        step={step}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={commitRaw}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            commitRaw();
+            e.target.blur();
+          }
+        }}
+      />
+      <div className="flex flex-col rounded border overflow-hidden" style={{ borderColor: "#BFAE8C", width: 28 }}>
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value + step))}
+          className="text-[10px] leading-none py-1.5"
+          style={{ backgroundColor: "#EAE1CE", color: "#463823", borderBottom: "1px solid #BFAE8C" }}
+        >
+          ▲
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value - step))}
+          className="text-[10px] leading-none py-1.5"
+          style={{ backgroundColor: "#EAE1CE", color: "#463823" }}
+        >
+          ▼
+        </button>
+      </div>
+      <span className="text-[18px]" style={{ color: "#4F4030" }}>
+        mm (0.5씩)
+      </span>
+    </div>
+  );
+}
+
+function CncPocketDiagram({ T, depth, protrusion, spec }) {
+  const pxPerMm = CNC_PX_PER_MM;
+  const movementWidthMm = MOVEMENT_SPEC_COMMON.bodySize;
+  const bodyDepthMm = MOVEMENT_SPEC_COMMON.bodyDepth;
+  const boardWidthMm = movementWidthMm + CNC_DIAGRAM_MARGIN_MM * 2;
+  const boardWidthPx = boardWidthMm * pxPerMm;
+  const boardHeightPx = T * pxPerMm;
+  const overhangMm = Math.max(bodyDepthMm - depth, 0);
+  const overhangPx = overhangMm * pxPerMm;
+
+  const leftPad = 20;
+  const rightPad = 20;
+  const topPad = CNC_TOP_FIXED_PX; // 고정 — T/depth와 무관하게 항상 동일
+  const bottomPad = overhangPx + 20; // 아래쪽만 가변
+
+  const originX = leftPad;
+  const originY = topPad;
+
+  const pocketX = originX + CNC_DIAGRAM_MARGIN_MM * pxPerMm;
+  const pocketY = originY + (T - depth) * pxPerMm;
+  const pocketW = movementWidthMm * pxPerMm;
+  const pocketH = depth * pxPerMm;
+
+  const movementDrawW = movementWidthMm * 0.82 * 1.1 * pxPerMm; // 가로 길이 10% 확대
+  const movementX = pocketX + (pocketW - movementDrawW) / 2;
+  const movementH = bodyDepthMm * pxPerMm;
+
+  const shaftW = CNC_SHAFT_WIDTH_MM * pxPerMm;
+  const shaftX = originX + boardWidthPx / 2 - shaftW / 2;
+  // 표면 위 축 길이(Gap) = protrusion(mm) × 고정 배율(pxPerMm, 이제 보드와 동일한 상수라 T와 완전히 무관) —
+  // 같은 모델에서 나무두께만 바뀌어도 depth가 자동 재조정되어 protrusion 실측값이 그대로 유지되고, 화면에도 그대로 반영된다.
+  const shaftAboveOriginPx = Math.max(protrusion * pxPerMm, 6);
+  const shaftTopY = originY - shaftAboveOriginPx;
+  const shaftBottomY = pocketY;
+
+  // 관통홀 — 샤프트가 실제로 나무(시계판 잔여벽)를 뚫고 지나가는 구간[originY, pocketY]에서만, 샤프트보다 여유(clearance)만큼 더 넓게.
+  // 조립 가능하려면 홀이 샤프트보다 커야 하는데, 기존엔 축과 나무 사이에 여백이 전혀 없이(=지름이 똑같이) 그려져서 오해를 줬음.
+  const holeWpx = (CNC_SHAFT_WIDTH_MM + CNC_HOLE_CLEARANCE_MM) * pxPerMm;
+  const holeX = shaftX - (holeWpx - shaftW) / 2;
+  const holeY = originY;
+  const holeH = Math.max(pocketY - originY, 0);
+
+  // 시침/분침 고정 브래킷 — 반드시 샤프트(8mm)보다 좁아야 나무 관통홀을 통과해 조립 가능하다는 지적 반영.
+  // 아래(시침용) 5mm×3mm, 위(분침용) 3.1mm×3mm, 둘 다 shaftW보다 작은 실측 mm값을 같은 pxPerMm으로 스케일링.
+  const lowerBracketW = 5 * pxPerMm; // 시침용
+  const lowerBracketH = 3 * pxPerMm;
+  const upperBracketW = 3.1 * pxPerMm; // 분침용
+  const upperBracketH = 3 * pxPerMm;
+  const shaftCenterX = shaftX + shaftW / 2;
+  const lowerBracketX = shaftCenterX - lowerBracketW / 2;
+  const lowerBracketY = shaftTopY - lowerBracketH; // 샤프트 바로 위
+  const upperBracketX = shaftCenterX - upperBracketW / 2;
+  const upperBracketY = lowerBracketY - upperBracketH; // 아래 브래킷에 간격 0으로 붙여서 쌓음
+  const handThickness = 3.75;
+  const hourHandY = lowerBracketY + lowerBracketH / 2 - handThickness / 2; // 시침 — 아래 브래킷 세로 정중앙
+  const minuteHandY = upperBracketY + upperBracketH / 2 - handThickness / 2; // 분침 — 위 브래킷 세로 정중앙
+
+  const viewW = leftPad + boardWidthPx + rightPad;
+  const viewH = topPad + boardHeightPx + bottomPad;
+
+  return (
+    <svg viewBox={`0 0 ${viewW} ${viewH}`} className="shrink-0" style={{ width: viewW, height: viewH, maxWidth: "100%" }}>
+      {/* 나무 판재 (양옆 노란 블록, 전체 두께) */}
+      <rect x={originX} y={originY} width={boardWidthPx} height={boardHeightPx} fill="#F5C518" stroke="#2B2420" strokeWidth="1.5" />
+      {/* 관통홀(흰 여백) — 샤프트가 시계판을 뚫는 구간만, 샤프트보다 조립 여유만큼 넓게 */}
+      {holeH > 0 && <rect x={holeX} y={holeY} width={holeWpx} height={holeH} fill="#FBF7EF" />}
+      {/* CNC 포켓(뒷면에서 파낸 부분) */}
+      {pocketH > 0 && (
+        <rect x={pocketX} y={pocketY} width={pocketW} height={pocketH} fill="#FBF7EF" stroke="#BFAE8C" strokeDasharray="4 3" strokeWidth="1" />
+      )}
+      {/* 축 (표면 위로 실제 돌출량만큼) */}
+      <rect x={shaftX} y={shaftTopY} width={shaftW} height={Math.max(shaftBottomY - shaftTopY, 0)} fill="#D64545" />
+      {/* 나사산 — 축 위에 일정 간격으로 홈 표시(스크류 느낌) */}
+      {(() => {
+        const threadPitch = 4.5;
+        const lines = [];
+        for (let y = shaftTopY + threadPitch; y < shaftBottomY; y += threadPitch) {
+          lines.push(y);
+        }
+        return lines.map((y, i) => (
+          <line key={i} x1={shaftX} y1={y} x2={shaftX + shaftW} y2={y} stroke="#8A2E2E" strokeWidth="1" />
+        ));
+      })()}
+      {/* 시침/분침 고정 브래킷 — 실측 mm 스펙(5×3mm, 3.1×3mm), 둘 다 샤프트(8mm)보다 좁아 관통홀 통과 가능 */}
+      <rect x={lowerBracketX} y={lowerBracketY} width={lowerBracketW} height={lowerBracketH} fill="#FBF7EF" stroke="#1A1A1A" strokeWidth="1.5" />
+      <rect x={upperBracketX} y={upperBracketY} width={upperBracketW} height={upperBracketH} fill="#FBF7EF" stroke="#1A1A1A" strokeWidth="1.5" />
+      {/* 분침(긴 바늘, 위) — 위 브래킷 세로 정중앙 */}
+      <rect x={shaftX - 10} y={minuteHandY} width={218.75} height={handThickness} fill="#1A1A1A" />
+      {/* 시침(짧은 바늘, 아래) — 아래 브래킷 세로 정중앙 */}
+      <rect x={shaftX - 10} y={hourHandY} width={112.5} height={handThickness} fill="#1A1A1A" />
+      {/* 무브먼트 몸체 — 포켓이 없어도(얇은 판재) 항상 표시: 이 경우 뒷면에 그대로 걸쳐 튀어나온 모습으로 그려짐 */}
+      <rect x={movementX} y={pocketY} width={movementDrawW} height={movementH} rx={Math.min(10, movementDrawW / 6)} fill="#46484C" />
+      <text
+        x={movementX + movementDrawW / 2}
+        y={pocketY + movementH / 2}
+        fontSize={Math.max(10, Math.min(movementH * 0.32, (movementDrawW * 0.85) / Math.max(spec.model.length * 0.58, 1)))}
+        fontWeight="700"
+        fill="#FFFFFF"
+        textAnchor="middle"
+        dominantBaseline="middle"
+      >
+        {spec.model}
+      </text>
+    </svg>
+  );
+}
+
+function CncCalcSection({ movements }) {
+  // 탭을 열자마자 다이어그램이 바로 보이도록, 목록의 첫 번째(추시계 제외) 무브먼트를 기본 선택으로.
+  // CncCalcSection은 "가공계산기" 탭으로 전환될 때마다 새로 마운트되므로(부모의 {tab==="cnc" && ...} 조건부 렌더),
+  // 이 초기값 계산은 매번 탭 진입 시 자연스럽게 다시 실행된다.
+  const [inventoryId, setInventoryId] = useState(() => {
+    const first = movements.find((m) => m.category === "무브먼트" && !m.pendulum);
+    return first ? first.id : "";
+  });
+  const [panelThickness, setPanelThickness] = useState(14 - CNC_SHAFT_TO_MAX_PANEL_OFFSET_MM);
+  const [depth, setDepth] = useState(0);
+
+  // 추시계(pendulum)는 이 계산과 무관한 별도 카테고리라 목록에서 제외
+  const inventoryMovements = useMemo(() => movements.filter((m) => m.category === "무브먼트" && !m.pendulum), [movements]);
+  const selectedInventoryItem = inventoryMovements.find((m) => m.id === inventoryId) || null;
+  const spec = selectedInventoryItem
+    ? deriveMovementSpec(parseFloat(selectedInventoryItem.shaftLength), selectedInventoryItem.model || selectedInventoryItem.brand)
+    : null;
+  // 이펙트 의존성용 — spec은 매 렌더마다 새로 계산되는 객체라 참조가 안 바뀌므로, 실제 "선택이 바뀌었는지"는 이 값으로 판단
+  const specIdentity = inventoryId;
+
+  const T_MIN = 4;
+  const T_MAX = 42;
+  const T = Math.min(T_MAX, Math.max(Number(panelThickness) || 0, T_MIN));
+  const recommendedDepth = spec ? Math.max(T - spec.maxPanelThickness, 0) : 0;
+
+  // 선택(샤프트 길이 or 재고 무브먼트)이 바뀌면 나무두께를 그 스펙의 최적 조건(=시계판 최대두께)으로 자동 설정
+  useEffect(() => {
+    if (spec) setPanelThickness(spec.maxPanelThickness);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specIdentity]);
+
+  // 판재두께가 바뀌면 가공깊이를 추천값으로 리셋 — 그 전까지는 사용자가 스핀버튼으로 자유롭게 조절 가능(시뮬레이션)
+  useEffect(() => {
+    setDepth(recommendedDepth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [T, specIdentity]);
+
+  // 가공깊이 스핀버튼 자체의 상하한을 나무두께/모델 스펙에 맞춰 미리 계산 — "작동금지"를 경고문 대신 애초에 선택 불가능하게 만드는 방식.
+  // 하한: 축 돌출 추정값이 0mm(=축이 표면까지 안 닿음)이 되지 않도록 최소 0.5mm는 항상 돌출되게.
+  // 상한: 시계판 두께(잔여)가 4mm 이하로 얇아지지 않도록(안전 최소치) 최소 4.5mm는 항상 남게.
+  const MIN_WALL_MM = 4;
+  const depthMinRaw = spec ? T - spec.shaftD + 0.5 : 0; // 0보다 클 때만 "진짜" 하한 제약(돌출 0mm 방지) — 음수면 그냥 0(가공 안 함)이 자연스러운 하한일 뿐, 경고 대상 아님
+  const depthMinBound = Math.max(0, depthMinRaw);
+  const depthMaxBound = spec ? Math.min(T, Math.max(depthMinBound, T - MIN_WALL_MM - 0.5)) : T;
+
+  const depthClamped = Math.min(Math.max(depth, depthMinBound), depthMaxBound);
+  const atMinDepthLimit = spec && depthMinRaw > 0.01 && Math.abs(depthClamped - depthMinBound) < 0.01;
+  const atMaxDepthLimit = spec && Math.abs(depthClamped - depthMaxBound) < 0.01 && depthMaxBound > depthMinBound + 0.01;
+  const remaining = Math.max(T - depthClamped, 0);
+  const protrusion = spec ? Math.max(spec.shaftD - remaining, 0) : 0;
+  const overhang = spec ? Math.max(MOVEMENT_SPEC_COMMON.bodyDepth - depthClamped, 0) : 0;
+  const embedMargin = spec ? Math.max(depthClamped - MOVEMENT_SPEC_COMMON.bodyDepth, 0) : 0;
+  const wallTooThick = spec && remaining > spec.maxPanelThickness;
+  const isDefault = spec && Math.abs(depthClamped - recommendedDepth) < 0.05;
+
+  const selectField = (
+    <Field label="무브먼트 선택">
+      <select className={inputCls + " w-[480px]"} style={inputStyle} value={inventoryId} onChange={(e) => setInventoryId(e.target.value)}>
+        <option value="">선택하세요</option>
+        {inventoryMovements.map((m) => (
+          <option key={m.id} value={m.id}>
+            {(m.model || m.brand) + (m.shaftLength ? `(${m.shaftLength})` : "")}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="text-sm" style={{ color: "#4F4030" }}>
+        두꺼운 판재에 무브먼트를 매립할 때, 뒷면을 얼마나 CNC로 파내야 하는지(가공 깊이) 계산하고,
+        <br />
+        스핀 버튼으로 직접 조절하며 시뮬레이션해볼 수 있어요.
+      </div>
+
+      <div className="flex flex-col gap-3 p-4 rounded border bg-white/70" style={{ borderColor: "#BFAE8C" }}>
+        {spec ? (
+          <>
+            <div className="flex items-start justify-center gap-3">
+              <CncSpinField label="나무두께" value={T} onChange={(v) => setPanelThickness(v)} min={T_MIN} max={T_MAX} step={0.5} />
+              <CncPocketDiagram T={T} depth={depthClamped} protrusion={protrusion} spec={spec} />
+              <CncSpinField label="가공 깊이" value={depthClamped} onChange={(v) => setDepth(v)} min={depthMinBound} max={depthMaxBound} step={0.5} />
+            </div>
+            {!isDefault && (
+              <div className="flex justify-center -mt-1">
+                <button
+                  type="button"
+                  onClick={() => setDepth(recommendedDepth)}
+                  className="text-[10px] px-2 py-0.5 rounded border"
+                  style={{ borderColor: "#BFAE8C", color: "#7A5230" }}
+                >
+                  추천 가공깊이({recommendedDepth.toFixed(1)}mm)로 재설정
+                </button>
+              </div>
+            )}
+
+            {selectField}
+
+            <div className="flex flex-col gap-2">
+              <div
+                className="text-sm px-3 py-2.5 rounded"
+                style={
+                  atMinDepthLimit || atMaxDepthLimit
+                    ? { backgroundColor: "#F3E3D3", color: "#B0503A" }
+                    : { backgroundColor: "#E7EFE6", color: "#2B2420" }
+                }
+              >
+                {(atMinDepthLimit || atMaxDepthLimit) && (
+                  <div className="flex items-center gap-1 font-semibold mb-1">
+                    <AlertTriangle size={13} className="shrink-0" />
+                    {atMinDepthLimit
+                      ? "가공깊이 하한에 도달했어요 — 더 얕게 파면 축이 표면까지 안 닿아요"
+                      : "가공깊이 상한에 도달했어요 — 더 깊게 파면 시계판이 너무 얇아져요"}
+                  </div>
+                )}
+                시계판 두께 : <b>{remaining.toFixed(1)}mm</b>, 나무판 ↔ 시계바늘 Gap : <b>{protrusion.toFixed(1)}mm</b>
+              </div>
+              <div className="text-xs px-3 py-2 rounded" style={{ backgroundColor: "#F3E3D3", color: "#7A5230" }}>
+                {embedMargin > 0
+                  ? `무브먼트가 나무 안에 완전히 들어가요 (뒷면 여유 ${embedMargin.toFixed(1)}mm)`
+                  : overhang > 0
+                  ? `무브먼트가 나무 뒷면보다 ${overhang.toFixed(1)}mm 튀어나와요`
+                  : "무브먼트가 뒷면과 정확히 맞아떨어져요"}
+              </div>
+              {wallTooThick && (
+                <div className="text-xs px-3 py-2 rounded flex items-start gap-1.5" style={{ backgroundColor: "#F3E3D3", color: "#B0503A" }}>
+                  <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                  시계판 두께({remaining.toFixed(1)}mm)가 이 모델의 한계({spec.maxPanelThickness}mm)보다 두꺼워요 — 축이 표면 위로 충분히 안 나와 조립이 안 될 수 있어요. 가공깊이를 더 키워주세요.
+                </div>
+              )}
+              <div className="text-xs px-3 py-2 rounded" style={{ backgroundColor: "#F7F2E9", color: "#4F4030", border: "1px solid #BFAE8C" }}>
+                관통홀은 샤프트({CNC_SHAFT_WIDTH_MM}mm)보다 여유(+{CNC_HOLE_CLEARANCE_MM}mm)를 둔 {CNC_SHAFT_WIDTH_MM + CNC_HOLE_CLEARANCE_MM}mm로 뚫어야 조립돼요 — 이미지의 시계판 구간에서 축 좌우로 보이는 흰 여백이 그 여유폭이에요.
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {selectField}
+            {selectedInventoryItem && !spec && (
+              <div className="text-xs px-3 py-2 rounded" style={{ backgroundColor: "#F3E3D3", color: "#B0503A" }}>
+                이 무브먼트("{selectedInventoryItem.model || selectedInventoryItem.brand}")는 샤프트길이 정보가 없어서 계산할 수 없어요. 재고 수정 화면에서 샤프트길이를 먼저 입력해주세요.
+              </div>
+            )}
+            {!selectedInventoryItem && (
+              <div className="text-sm text-center py-6" style={{ color: "#4F4030" }}>
+                무브먼트를 선택해주세요.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div
+        className="text-[11px] leading-relaxed px-3 py-2 rounded"
+        style={{ backgroundColor: "#F7F2E9", color: "#4F4030", border: "1px solid #BFAE8C" }}
+      >
+시계판 최대두께는 "샤프트길이(D) − {CNC_SHAFT_TO_MAX_PANEL_OFFSET_MM}mm" 공식으로 계산돼요(영타운 12888 시리즈 규격표 샘플 다수값 기준). 목록은 무브먼트 탭에 등록된 제품 중 추시계를 제외하고 보여줘요. 몸체 크기·깊이는 아직 공통 가정값(56×56mm, 깊이 16mm)을 쓰고 있어 실제와 다를 수 있어요.
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------- Main App ---------------------------- */
+
+const TABS = [
+  { key: "quickadd", label: "AI등록", icon: UploadCloud },
+  { key: "handsA", label: "A타입", sub: "(태양축)", icon: ListTree },
+  { key: "handsB", label: "B타입", sub: "(정공축)", icon: ListTree },
+  { key: "movements", label: "무브먼트", icon: Cog },
+  { key: "misc", label: "기타", icon: MoreHorizontal },
+  { key: "log", label: "입출고 이력", icon: Package },
+  { key: "info", label: "Info", icon: InfoIcon },
+  { key: "cnc", label: "가공계산기", icon: Ruler },
+];
+
+function ClockPartsLedger() {
+  const [loaded, setLoaded] = useState(false);
+  const [movements, setMovements] = useState([]);
+  const [hands, setHands] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [deletedSeedKeys, setDeletedSeedKeys] = useState([]); // 사용자가 삭제한 시드 항목의 source(없으면 model) — F5해도 되살아나지 않도록 추적
+  const [infoItems, setInfoItems] = useState([]);
+  const [editingInfo, setEditingInfo] = useState(null);
+  const [infoQuery, setInfoQuery] = useState("");
+  const [infoKindFilter, setInfoKindFilter] = useState("전체");
+  const [tab, setTab] = useState("movements");
+  const [query, setQuery] = useState("");
+  const [brandFilter, setBrandFilter] = useState("전체");
+  const [colorFilter, setColorFilter] = useState("전체");
+  const [lengthBucket, setLengthBucket] = useState("전체");
+  // 축종류(태양축/정공축)·소음종류(무소음/일반형)는 한 필드의 반대값 쌍이라 XOR: 둘 다 체크 해제(또는 둘 다 체크)면 전체 표시,
+  // 하나만 체크하면 그것만. 진자형/Reverse는 서로 다른 독립 필드라 각각 체크 시 그 값이 true인 것만(AND) 걸러냄.
+  const [filterTaeyangAxis, setFilterTaeyangAxis] = useState(true); // 태양축 — 기본 체크(현재 데이터가 전부 태양축이라 기본값 그대로 전체가 보임)
+  const [filterJeonggongAxis, setFilterJeonggongAxis] = useState(false); // 정공축
+  const [filterMusoumOnly, setFilterMusoumOnly] = useState(false); // 무소음
+  const [filterIlbanOnly, setFilterIlbanOnly] = useState(false); // 일반형
+  const [filterPendulumOnly, setFilterPendulumOnly] = useState(false); // 진자형
+  const [filterReverseOnly, setFilterReverseOnly] = useState(false); // Reverse
+  const [shaftLengthFilter, setShaftLengthFilter] = useState("전체");
+  const [sortZeroLast, setSortZeroLast] = useState(false);
+  const [sortByStockDesc, setSortByStockDesc] = useState(false);
+  const [editing, setEditing] = useState(null); // {kind, item} or {kind, item:null} for new
+  const [stockTarget, setStockTarget] = useState(null); // {kind, item}
+  const [error, setError] = useState("");
+  const [githubSettings, setGithubSettings] = useState({ owner: "", repo: "", branch: "main", token: "" });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [toast, setToast] = useState("");
+
+  // 틀고정(sticky) 스택 — 탭바/필터바 높이를 실측해서 그 아래 요소들의 top을 정함.
+  // 고정 px값을 쓰면 탭 버튼이 좁은 창에서 2줄로 줄바꿈될 때 높이가 달라져 어긋나므로 직접 측정한다.
+  // (ResizeObserver를 먼저 시도했으나 이 앱을 미리보기하는 자동화 브라우저 환경에서 콜백이 전혀 발화하지 않는
+  // 문제가 있어— 실제 사용 환경에서도 신뢰할 수 있는 useLayoutEffect의 동기 measure 방식으로 교체함)
+  const tabBarRef = useRef(null);
+  const filterBarRef = useRef(null);
+  const [tabBarHeight, setTabBarHeight] = useState(65);
+  const [filterBarHeight, setFilterBarHeight] = useState(58);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (tabBarRef.current) {
+        const h = Math.ceil(tabBarRef.current.getBoundingClientRect().height);
+        setTabBarHeight((prev) => (prev === h ? prev : h));
+      }
+      if (filterBarRef.current) {
+        const h = Math.ceil(filterBarRef.current.getBoundingClientRect().height);
+        setFilterBarHeight((prev) => (prev === h ? prev : h));
+      }
+    };
+    measure();
+    // 동기 측정 한 번만으로는 레이아웃이 아직 최종 확정되기 전 높이를 잡을 수 있어(예: 폰트 로딩, Tailwind 클래스 적용 타이밍),
+    // 약간의 지연을 두고 다시 재측정해서 보정. requestAnimationFrame은 일부 환경(예: 비가시 상태의 백그라운드 렌더링)에서
+    // 전혀 발화하지 않는 걸 확인해서 setTimeout으로 대체 — 이건 렌더링 루프와 무관하게 항상 동작한다.
+    const t1 = setTimeout(measure, 50);
+    const t2 = setTimeout(measure, 300);
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("resize", measure);
+    };
+  });
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 2500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await loadAll();
+        const deletedKeys = new Set(data.deletedSeedKeys || []);
+        setDeletedSeedKeys(data.deletedSeedKeys || []);
+        const mergedMovements = mergeSeeds(data.movements, SEED_MOVEMENTS, emptyMovement, deletedKeys);
+        const mergedHands = mergeSeeds(data.hands, SEED_HANDS, emptyHand, deletedKeys);
+        let colorChanged = false;
+        const normalizedHands = mergedHands.map((h) => {
+          const nc = normalizeColor(h.color);
+          if (nc !== h.color) {
+            colorChanged = true;
+            return { ...h, color: nc };
+          }
+          return h;
+        });
+        let movementsChanged = false;
+        const normalizedMovements = mergedMovements.map((m) => {
+          const next = { ...m };
+          let changed = false;
+          if (!next.category) {
+            next.category = next.brand === "기타" ? "기타" : "무브먼트";
+            changed = true;
+          }
+          if (!next.shaftLength) {
+            const text = `${next.model || ""} ${next.note || ""}`;
+            const mm = text.match(/(\d+)\s*mm/);
+            next.shaftLength = mm ? `${mm[1]}mm` : "14mm";
+            changed = true;
+          }
+          if (!next.noiseType) {
+            const text = `${next.model || ""} ${next.note || ""}`;
+            next.noiseType = text.includes("무소음") ? "무소음" : "일반형";
+            changed = true;
+          }
+          if (!next.axisType) {
+            next.axisType = "태양축";
+            changed = true;
+          }
+          if (changed) movementsChanged = true;
+          return changed ? next : m;
+        });
+        setMovements(normalizedMovements);
+        setHands(normalizedHands);
+        setTransactions(data.transactions);
+        // 중요도(priority) 필드 도입 이전에 등록된 기존 자료는 같은 종류 안에서 등록 순서대로 1,2,3...을 부여
+        let infoChanged = false;
+        const kindCounters = {};
+        const normalizedInfoItems = data.infoItems.map((i) => {
+          if (i.priority !== undefined && i.priority !== null && i.priority !== "") return i;
+          infoChanged = true;
+          kindCounters[i.kind] = (kindCounters[i.kind] || 0) + 1;
+          return { ...i, priority: kindCounters[i.kind] };
+        });
+        setInfoItems(normalizedInfoItems);
+        if (mergedMovements !== data.movements || movementsChanged) saveKey("movements", normalizedMovements);
+        if (mergedHands !== data.hands || colorChanged) saveKey("hands", normalizedHands);
+        if (infoChanged) saveKey("infoItems", normalizedInfoItems);
+        const gh = loadGithubSettingsLS();
+        if (gh) setGithubSettings(gh);
+      } catch (e) {
+        setError("저장된 데이터를 불러오지 못했어요.");
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, []);
+
+  const saveGithubSettings = (s) => {
+    setGithubSettings(s);
+    saveGithubSettingsLS(s);
+    setSettingsOpen(false);
+  };
+
+  const persist = useCallback((key, val) => {
+    saveKey(key, val);
+  }, []);
+
+  /* ---- CRUD ---- */
+  const saveMovement = (f) => {
+    const cleaned = { ...f, stock: Number(f.stock) || 0 };
+    setMovements((prev) => {
+      const exists = prev.some((m) => m.id === cleaned.id);
+      const next = exists ? prev.map((m) => (m.id === cleaned.id ? cleaned : m)) : [cleaned, ...prev];
+      persist("movements", next);
+      setToast(exists ? "수정 내용을 저장했어요." : "새 무브먼트를 등록했어요.");
+      return next;
+    });
+    setEditing(null);
+  };
+
+  const saveHand = (f) => {
+    const cleaned = { ...f, stock: Number(f.stock) || 0 };
+    setHands((prev) => {
+      const exists = prev.some((h) => h.id === cleaned.id);
+      const next = exists ? prev.map((h) => (h.id === cleaned.id ? cleaned : h)) : [cleaned, ...prev];
+      persist("hands", next);
+      setToast(exists ? "수정 내용을 저장했어요." : "새 시계바늘을 등록했어요.");
+      return next;
+    });
+    setEditing(null);
+  };
+
+  // 수정 화면에서 분류(A/B타입·무브먼트·기타)를 바꿔 다른 배열로 이동시킬 때 사용
+  const saveEditedItem = (removeFromKind, id, newKind, data) => {
+    if (newKind === "movement") {
+      saveMovement(data);
+    } else {
+      saveHand(data);
+    }
+    if (removeFromKind === "hand") {
+      setHands((prev) => {
+        const next = prev.filter((h) => h.id !== id);
+        persist("hands", next);
+        return next;
+      });
+      setToast("다른 분류로 재등록했어요.");
+    } else if (removeFromKind === "movement") {
+      setMovements((prev) => {
+        const next = prev.filter((m) => m.id !== id);
+        persist("movements", next);
+        return next;
+      });
+      setToast("다른 분류로 재등록했어요.");
+    }
+  };
+
+  // 삭제한 항목이 SEED_MOVEMENTS/SEED_HANDS의 시드였다면 그 키(source, 없으면 model)를 기록해둬서
+  // 다음 로드 때 mergeSeeds가 다시 추가하지 않도록 함 — "삭제해도 F5하면 되살아나는" 버그 수정.
+  const recordDeletedKeys = (items) => {
+    const keys = items.map((it) => it.source || it.model).filter(Boolean);
+    if (!keys.length) return;
+    setDeletedSeedKeys((prev) => {
+      const next = Array.from(new Set([...prev, ...keys]));
+      saveKey("deletedSeedKeys", next);
+      return next;
+    });
+  };
+
+  const deleteMovement = (id) => {
+    setMovements((prev) => {
+      const target = prev.find((m) => m.id === id);
+      const next = prev.filter((m) => m.id !== id);
+      persist("movements", next);
+      if (target) recordDeletedKeys([target]);
+      return next;
+    });
+    setToast("삭제했어요.");
+  };
+  const deleteMiscAll = () => {
+    const count = movements.filter((m) => (m.category || "무브먼트") === "기타").length;
+    if (count === 0) return;
+    if (!window.confirm(`기타 항목 ${count}개를 모두 삭제할까요?\n삭제하면 되돌릴 수 없어요.`)) return;
+    setMovements((prev) => {
+      const targets = prev.filter((m) => (m.category || "무브먼트") === "기타");
+      const next = prev.filter((m) => (m.category || "무브먼트") !== "기타");
+      persist("movements", next);
+      recordDeletedKeys(targets);
+      return next;
+    });
+    setToast("기타 항목을 모두 삭제했어요.");
+  };
+  const deleteHand = (id) => {
+    setHands((prev) => {
+      const target = prev.find((h) => h.id === id);
+      const next = prev.filter((h) => h.id !== id);
+      persist("hands", next);
+      if (target) recordDeletedKeys([target]);
+      return next;
+    });
+    setToast("삭제했어요.");
+  };
+
+  const saveInfoItem = (data) => {
+    const exists = infoItems.some((i) => i.id === data.id);
+    setInfoItems((prev) => {
+      const next = exists ? prev.map((i) => (i.id === data.id ? data : i)) : [data, ...prev];
+      persist("infoItems", next);
+      return next;
+    });
+    setEditingInfo(null);
+    setToast(exists ? "수정했어요." : "등록했어요.");
+  };
+  const deleteInfoItem = (id) => {
+    setInfoItems((prev) => {
+      const next = prev.filter((i) => i.id !== id);
+      persist("infoItems", next);
+      return next;
+    });
+    setToast("삭제했어요.");
+  };
+
+  const commitStock = (kind, item, dir, qty, note, date) => {
+    const delta = dir === "in" ? qty : -qty;
+    const newStock = Math.max(0, (Number(item.stock) || 0) + delta);
+    if (kind === "movement") {
+      setMovements((prev) => {
+        const next = prev.map((m) => (m.id === item.id ? { ...m, stock: newStock } : m));
+        persist("movements", next);
+        return next;
+      });
+    } else {
+      setHands((prev) => {
+        const next = prev.map((h) => (h.id === item.id ? { ...h, stock: newStock } : h));
+        persist("hands", next);
+        return next;
+      });
+    }
+    const tx = {
+      id: uid(),
+      kind,
+      itemId: item.id,
+      label:
+        kind === "movement" ? `${item.brand} · ${item.shaftLength || "-"}` : `${item.type} ${item.length}mm`,
+      dir,
+      qty,
+      note,
+      date: date ? new Date(`${date}T${new Date().toTimeString().slice(0, 8)}`).toISOString() : new Date().toISOString(),
+    };
+    setTransactions((prev) => {
+      const next = [tx, ...prev].slice(0, 500);
+      persist("transactions", next);
+      return next;
+    });
+    setStockTarget(null);
+  };
+
+  /* ---- filtering ---- */
+  const zeroLastCompare = (a, b) => ((Number(a.stock) || 0) === 0 ? 1 : 0) - ((Number(b.stock) || 0) === 0 ? 1 : 0);
+  const stockDescCompare = (a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0);
+
+  const filteredMovements = useMemo(() => {
+    const activeCategory = tab === "movements" ? "무브먼트" : tab === "misc" ? "기타" : null;
+    const list = movements.filter((m) => {
+      if (activeCategory && (m.category || "무브먼트") !== activeCategory) return false;
+      if (brandFilter !== "전체" && m.brand !== brandFilter) return false;
+      if (query && !(`${m.model || ""} ${m.brand} ${m.note}`.toLowerCase().includes(query.toLowerCase()))) return false;
+      if (filterTaeyangAxis !== filterJeonggongAxis) {
+        if (filterTaeyangAxis && m.axisType !== "태양축") return false;
+        if (filterJeonggongAxis && m.axisType !== "정공축") return false;
+      }
+      if (filterMusoumOnly !== filterIlbanOnly) {
+        if (filterMusoumOnly && m.noiseType !== "무소음") return false;
+        if (filterIlbanOnly && m.noiseType !== "일반형") return false;
+      }
+      if (filterPendulumOnly && !m.pendulum) return false;
+      if (filterReverseOnly && !m.reverse) return false;
+      if (shaftLengthFilter !== "전체" && m.shaftLength !== shaftLengthFilter) return false;
+      return true;
+    });
+    // 제품명 끝에 붙은 길이 표기("14mm" 등)를 뗀 "기본 이름"으로 먼저 그룹을 묶고, 그 안에서 샤프트길이 오름차순 —
+    // 예: "고급형 무소음 무브먼트14mm"와 "...19mm"는 전체 문자열은 다르지만 같은 제품의 길이만 다른 것이므로 같은 그룹으로 처리.
+    const baseModelName = (m) => (m.model || "").replace(/\s*\d+\s*mm\s*$/i, "").trim();
+    const sorted = sortByStockDesc
+      ? [...list].sort(stockDescCompare)
+      : [...list].sort((a, b) => {
+          const baseCompare = baseModelName(a).localeCompare(baseModelName(b), "ko");
+          if (baseCompare !== 0) return baseCompare;
+          return (parseInt(a.shaftLength, 10) || 0) - (parseInt(b.shaftLength, 10) || 0);
+        });
+    return sortZeroLast ? [...sorted].sort(zeroLastCompare) : sorted;
+  }, [
+    movements,
+    tab,
+    brandFilter,
+    query,
+    filterTaeyangAxis,
+    filterJeonggongAxis,
+    filterMusoumOnly,
+    filterIlbanOnly,
+    filterPendulumOnly,
+    filterReverseOnly,
+    shaftLengthFilter,
+    sortZeroLast,
+    sortByStockDesc,
+  ]);
+
+  const filteredHands = useMemo(() => {
+    const activeType = tab === "handsA" ? "A타입" : tab === "handsB" ? "B타입" : null;
+    const bucket = HAND_LENGTH_BUCKETS.find((b) => b.key === lengthBucket);
+    const filtered = hands.filter((h) => {
+      if (activeType && h.type !== activeType) return false;
+      if (query && !(`${h.model || ""} ${h.type} ${h.color} ${h.note}`.toLowerCase().includes(query.toLowerCase()))) return false;
+      if (colorFilter !== "전체" && h.color !== colorFilter) return false;
+      const len = Number(h.length);
+      if (bucket && !bucket.test(len)) return false;
+      return true;
+    });
+    const list = sortByStockDesc
+      ? [...filtered].sort(stockDescCompare)
+      : [...filtered].sort((a, b) => (Number(a.length) || 0) - (Number(b.length) || 0));
+    return sortZeroLast ? [...list].sort(zeroLastCompare) : list;
+  }, [hands, tab, query, colorFilter, lengthBucket, sortZeroLast, sortByStockDesc]);
+
+  const resetFilters = () => {
+    setQuery("");
+    setBrandFilter("전체");
+    setColorFilter("전체");
+    setLengthBucket("전체");
+    setFilterTaeyangAxis(true); // 기본값: 태양축 체크(현재 데이터 기준 전체 표시와 동일)
+    setFilterJeonggongAxis(false);
+    setFilterMusoumOnly(false);
+    setFilterIlbanOnly(false);
+    setFilterPendulumOnly(false);
+    setFilterReverseOnly(false);
+    setShaftLengthFilter("전체");
+    setSortZeroLast(false);
+    setSortByStockDesc(false);
+    setInfoQuery("");
+    setInfoKindFilter("전체");
+  };
+
+  const filteredInfoItems = infoItems.filter((i) => {
+    if (infoKindFilter !== "전체" && i.kind !== infoKindFilter) return false;
+    if (infoQuery.trim() && !(`${i.title} ${i.description}`.toLowerCase().includes(infoQuery.trim().toLowerCase()))) return false;
+    return true;
+  });
+
+  const buildFilterSummary = (count, parts) => (parts.length ? `${parts.join(" ")} ${count}개 검색됨` : `${count}개`);
+
+  const movementFilterParts = [];
+  if (tab === "movements") {
+    if (brandFilter !== "전체") movementFilterParts.push(brandFilter);
+    if (shaftLengthFilter !== "전체") movementFilterParts.push(shaftLengthFilter);
+    if (filterTaeyangAxis !== filterJeonggongAxis) movementFilterParts.push(filterTaeyangAxis ? "태양축" : "정공축");
+    if (filterMusoumOnly !== filterIlbanOnly) movementFilterParts.push(filterMusoumOnly ? "무소음" : "일반형");
+    if (filterPendulumOnly) movementFilterParts.push("진자형");
+    if (filterReverseOnly) movementFilterParts.push("Reverse");
+  }
+  if (query.trim()) movementFilterParts.push(`"${query.trim()}"`);
+
+  const handFilterParts = [];
+  if (colorFilter !== "전체") handFilterParts.push(colorFilter);
+  if (lengthBucket !== "전체") {
+    const b = HAND_LENGTH_BUCKETS.find((x) => x.key === lengthBucket);
+    if (b) handFilterParts.push(b.label);
+  }
+  if (query.trim()) handFilterParts.push(`"${query.trim()}"`);
+
+  const brandFilterOptions = useMemo(() => {
+    const extra = Array.from(new Set(movements.map((m) => m.brand).filter(Boolean))).filter(
+      (b) => !BRANDS.includes(b)
+    );
+    return [...BRANDS, ...extra.sort()];
+  }, [movements]);
+
+  const shaftLengthFilterOptions = useMemo(() => {
+    const extra = Array.from(new Set(movements.map((m) => m.shaftLength).filter(Boolean))).filter(
+      (s) => !SHAFT_LENGTHS.includes(s)
+    );
+    const sortByNumber = (a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0);
+    return [...SHAFT_LENGTHS, ...extra].sort(sortByNumber);
+  }, [movements]);
+
+  const colorFilterOptions = useMemo(() => {
+    const extra = Array.from(new Set(hands.map((h) => h.color).filter(Boolean))).filter(
+      (c) => !HAND_COLORS.includes(c)
+    );
+    return [...HAND_COLORS, ...extra.sort()];
+  }, [hands]);
+
+  const lowStockCount = useMemo(
+    () => [...movements, ...hands].filter((i) => Number(i.stock) <= 2).length,
+    [movements, hands]
+  );
+
+  const groupedTransactions = useMemo(() => {
+    const groups = [];
+    let currentKey = null;
+    let currentGroup = null;
+    transactions.forEach((t) => {
+      const d = new Date(t.date);
+      const key = d.toDateString();
+      if (key !== currentKey) {
+        currentKey = key;
+        currentGroup = {
+          key,
+          label: d.toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }),
+          items: [],
+        };
+        groups.push(currentGroup);
+      }
+      currentGroup.items.push(t);
+    });
+    return groups;
+  }, [transactions]);
+
+  const renderEditForm = () => {
+    if (!editing) return null;
+    const wasHand = hands.some((h) => h.id === editing.item.id);
+    const wasMovement = movements.some((m) => m.id === editing.item.id);
+    const currentClass = editing.kind === "hand" ? editing.item.type : editing.item.category || "무브먼트";
+    return (
+      <>
+        {(wasHand || wasMovement) && (
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="text-xs font-medium" style={{ color: "#463823" }}>
+              분류:
+            </span>
+            {["A타입", "B타입", "무브먼트", "기타"].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => {
+                  const isHandClass = c === "A타입" || c === "B타입";
+                  const next = isHandClass ? toHandDraft(editing.item, c) : toMovementDraft(editing.item, c);
+                  setEditing({ kind: isHandClass ? "hand" : "movement", item: next });
+                  setTab(c === "A타입" ? "handsA" : c === "B타입" ? "handsB" : c === "기타" ? "misc" : "movements");
+                }}
+                className="text-xs px-2.5 py-1 rounded border"
+                style={
+                  currentClass === c
+                    ? { backgroundColor: "#7A5230", color: "white", borderColor: "#7A5230" }
+                    : { borderColor: "#BFAE8C", color: "#463823" }
+                }
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+        {editing.kind === "movement" ? (
+          <MovementForm
+            key={editing.item.id + "-" + currentClass}
+            initial={editing.item}
+            isEdit={wasMovement}
+            existingItems={movements}
+            onSave={(f) => saveEditedItem(wasHand ? "hand" : null, editing.item.id, "movement", f)}
+            onCancel={() => setEditing(null)}
+          />
+        ) : (
+          <HandForm
+            key={editing.item.id + "-" + currentClass}
+            initial={editing.item}
+            isEdit={wasHand}
+            existingItems={hands}
+            onSave={(f) => saveEditedItem(wasMovement ? "movement" : null, editing.item.id, "hand", f)}
+            onCancel={() => setEditing(null)}
+          />
+        )}
+      </>
+    );
+  };
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F7F2E9" }}>
+        <div className="text-sm" style={{ color: "#7A5230" }}>
+          재고대장 불러오는 중...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <GithubSettingsContext.Provider value={githubSettings}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F7F2E9", fontFamily: "'Inter', sans-serif" }}>
+      <div className="max-w-[920px] mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-end justify-between mb-5 pb-4 border-b-2" style={{ borderColor: "#2B2420" }}>
+          <div>
+            <div className="text-xs tracking-[0.2em] uppercase" style={{ color: "#7A5230" }}>
+              Wood Clock Workshop
+            </div>
+            <h1
+              className="text-[26px] leading-tight font-semibold"
+              style={{ fontFamily: "'Spectral', serif", color: "#2B2420" }}
+            >
+              시계 부속 재고대장
+            </h1>
+            <div
+              className="text-[10px] mt-0.5"
+              style={{ color: "#4F4030", fontFamily: "'IBM Plex Mono', monospace" }}
+              title="새로고침해도 이 값이 그대로면 캐시된 옛 화면을 보고 있는 거예요 — 탭을 닫고 바로가기를 다시 열거나 Ctrl+Shift+R로 새로고침 해보세요."
+            >
+              {APP_VERSION}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {lowStockCount > 0 && (
+              <div
+                className="text-xs px-2.5 py-1 rounded flex items-center gap-1"
+                style={{ backgroundColor: "#F3E3D3", color: "#B0503A" }}
+              >
+                <AlertTriangle size={12} /> 재고부족 {lowStockCount}건
+              </div>
+            )}
+            <button
+              onClick={() => exportAllToCSV(movements, hands)}
+              title="전체 제품 CSV로 내보내기 (엑셀/구글시트에서 열 수 있음)"
+              className="p-1.5 rounded border"
+              style={{ borderColor: "#BFAE8C", color: "#7A5230" }}
+            >
+              <DownloadIcon size={16} />
+            </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              title="GitHub 연결 설정"
+              className="p-1.5 rounded border"
+              style={{ borderColor: "#BFAE8C", color: "#7A5230" }}
+            >
+              <Settings size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs — 서랍 은유 */}
+        <div
+          ref={tabBarRef}
+          className="flex gap-1.5 mb-4 sticky top-0 z-20 pt-2 -mt-2 pb-1 flex-wrap"
+          style={{ backgroundColor: "#F7F2E9" }}
+        >
+          {TABS.map((t) => {
+            const IconComp = t.icon;
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => {
+                  if (t.key !== tab) resetFilters();
+                  setTab(t.key);
+                  setEditing(null);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-t-md text-sm font-medium border-b-0 transition"
+                style={
+                  active
+                    ? { backgroundColor: "#FBF7EF", color: "#2B2420", borderTop: "2px solid #7A5230", borderLeft: "1px solid #BFAE8C", borderRight: "1px solid #BFAE8C" }
+                    : { backgroundColor: "#EAE1CE", color: "#4F4030", border: "1px solid transparent" }
+                }
+              >
+                <IconComp size={14} />
+                {t.sub ? (
+                  <span className="leading-tight text-left">
+                    {t.label}
+                    <br />
+                    {t.sub}
+                  </span>
+                ) : (
+                  t.label
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-lg rounded-tl-none border p-4" style={{ backgroundColor: "#FBF7EF", borderColor: "#BFAE8C" }}>
+          {tab === "quickadd" && (
+            <QuickAddPanel
+              githubSettings={githubSettings}
+              onOpenSettings={() => setSettingsOpen(true)}
+              onSaveMovement={saveMovement}
+              onSaveHand={saveHand}
+              existingMovements={movements}
+              existingHands={hands}
+            />
+          )}
+          {(tab === "movements" || tab === "misc" || tab === "handsA" || tab === "handsB") && (
+            <>
+              {(tab === "handsA" || tab === "handsB") && (
+                <div
+                  className="flex items-center gap-2 flex-wrap px-3 py-2 rounded-lg mb-3 border"
+                  style={{ backgroundColor: "#F6ECD8", borderColor: "#D8B978" }}
+                >
+                  <InfoIcon size={16} style={{ color: "#2B2420" }} className="shrink-0" />
+                  <span className="text-sm font-bold" style={{ color: "#2B2420" }}>
+                    {tab === "handsA"
+                      ? "태양축 제원  시침 : ϕ5mm  분침 : ϕ3mm"
+                      : "정공축 제원  시침 : ϕ5.5mm  분침 : ϕ3.6mm"}
+                  </span>
+                </div>
+              )}
+              {tab === "movements" && (
+                <div
+                  className="flex items-center gap-2 flex-wrap px-3 py-2 rounded-lg mb-3 border"
+                  style={{ backgroundColor: "#F6ECD8", borderColor: "#D8B978" }}
+                >
+                  <InfoIcon size={16} style={{ color: "#2B2420" }} className="shrink-0" />
+                  <span className="text-sm font-bold" style={{ color: "#2B2420" }}>
+                    태양축 제원  시침 : ϕ5mm  분침 : ϕ3mm &nbsp;·&nbsp; 정공축 제원  시침 : ϕ5.5mm  분침 : ϕ3.6mm
+                  </span>
+                </div>
+              )}
+              {/* Search / filter bar — 등록 버튼까지 포함해서 탭 바로 아래에 틀고정(sticky), 리스트가 길어져도 항상 보이도록 */}
+              <div
+                ref={filterBarRef}
+                className="flex flex-wrap items-center gap-1 mb-3 sticky z-10 pt-2 pb-2 -mt-2"
+                style={{ top: tabBarHeight, backgroundColor: "#FBF7EF", borderBottom: "1px solid #BFAE8C" }}
+              >
+                <div className="relative w-32 shrink-0">
+                  <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-[#4F4030]" />
+                  <input
+                    className={inputCls + " pl-6 w-full"}
+                    style={filterInputStyle}
+                    placeholder={tab === "movements" || tab === "misc" ? "제품명/브랜드/메모 검색" : "제품명/색상/메모 검색"}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </div>
+                {tab === "movements" && (
+                  <>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>브랜드</span>
+                      <select className={inputCls + " w-16"} style={filterInputStyle} value={brandFilter} onChange={(e) => setBrandFilter(e.target.value)}>
+                        <option>전체</option>
+                        {brandFilterOptions.map((b) => (
+                          <option key={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>샤프트길이</span>
+                      <select
+                        className={inputCls + " w-16"}
+                        style={filterInputStyle}
+                        value={shaftLengthFilter}
+                        onChange={(e) => setShaftLengthFilter(e.target.value)}
+                      >
+                        <option>전체</option>
+                        {shaftLengthFilterOptions.map((s) => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>축종류</span>
+                      <div className="flex flex-col gap-0.5">
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                          <input
+                            type="checkbox"
+                            checked={filterTaeyangAxis}
+                            onChange={(e) => setFilterTaeyangAxis(e.target.checked)}
+                          />
+                          태양축
+                        </label>
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                          <input
+                            type="checkbox"
+                            checked={filterJeonggongAxis}
+                            onChange={(e) => setFilterJeonggongAxis(e.target.checked)}
+                          />
+                          정공축
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>소음종류</span>
+                      <div className="flex flex-col gap-0.5">
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                          <input
+                            type="checkbox"
+                            checked={filterMusoumOnly}
+                            onChange={(e) => setFilterMusoumOnly(e.target.checked)}
+                          />
+                          무소음
+                        </label>
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                          <input
+                            type="checkbox"
+                            checked={filterIlbanOnly}
+                            onChange={(e) => setFilterIlbanOnly(e.target.checked)}
+                          />
+                          일반형
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>옵션</span>
+                      <div className="flex flex-col gap-0.5">
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                          <input
+                            type="checkbox"
+                            checked={filterPendulumOnly}
+                            onChange={(e) => setFilterPendulumOnly(e.target.checked)}
+                          />
+                          진자형
+                        </label>
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                          <input
+                            type="checkbox"
+                            checked={filterReverseOnly}
+                            onChange={(e) => setFilterReverseOnly(e.target.checked)}
+                          />
+                          Reverse
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {(tab === "handsA" || tab === "handsB") && (
+                  <>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>색상</span>
+                      <select className={inputCls + " w-16"} style={filterInputStyle} value={colorFilter} onChange={(e) => setColorFilter(e.target.value)}>
+                        <option>전체</option>
+                        {colorFilterOptions.map((c) => (
+                          <option key={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] leading-none text-center" style={{ color: "#4F4030" }}>길이</span>
+                      <select
+                        className={inputCls + " w-20"}
+                        style={filterInputStyle}
+                        value={lengthBucket}
+                        onChange={(e) => setLengthBucket(e.target.value)}
+                      >
+                        <option>전체</option>
+                        {HAND_LENGTH_BUCKETS.map((b) => (
+                          <option key={b.key} value={b.key}>
+                            {b.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+                <div className="flex flex-col gap-0.5">
+                  <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                    <input type="checkbox" checked={sortZeroLast} onChange={(e) => setSortZeroLast(e.target.checked)} />
+                    재고0 맨아래
+                  </label>
+                  <label className="flex items-center gap-1 text-xs whitespace-nowrap" style={{ color: "#463823" }}>
+                    <input type="checkbox" checked={sortByStockDesc} onChange={(e) => setSortByStockDesc(e.target.checked)} />
+                    재고 많은 순
+                  </label>
+                </div>
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-1 px-2 py-1.5 rounded text-xs border whitespace-nowrap"
+                  style={{ borderColor: "#BFAE8C", color: "#463823" }}
+                >
+                  <RotateCcw size={12} /> 필터 초기화
+                </button>
+                {tab === "misc" && (
+                  <button
+                    onClick={deleteMiscAll}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded text-xs border whitespace-nowrap"
+                    style={{ borderColor: "#B0503A", color: "#B0503A" }}
+                  >
+                    <Trash2 size={12} /> 기타 전체삭제
+                  </button>
+                )}
+                <button
+                  onClick={() =>
+                    setEditing({
+                      kind: tab === "movements" || tab === "misc" ? "movement" : "hand",
+                      item:
+                        tab === "handsA"
+                          ? { ...emptyHand(), type: "A타입" }
+                          : tab === "handsB"
+                          ? { ...emptyHand(), type: "B타입" }
+                          : tab === "misc"
+                          ? emptyMovement("기타")
+                          : emptyMovement("무브먼트"),
+                    })
+                  }
+                  className="flex items-center gap-1 px-3 py-1.5 rounded text-sm text-white ml-auto"
+                  style={{ backgroundColor: "#7A5230" }}
+                >
+                  <Plus size={14} /> 등록
+                </button>
+              </div>
+
+              {editing &&
+                !filteredMovements.some((m) => m.id === editing.item.id) &&
+                !filteredHands.some((h) => h.id === editing.item.id) && (
+                  <div className="mb-4">{renderEditForm()}</div>
+                )}
+
+              <div className="flex flex-col gap-2.5">
+                {(tab === "movements" || tab === "misc") &&
+                  (filteredMovements.length === 0 ? (
+                    <div className="text-sm text-center py-8" style={{ color: "#4F4030" }}>
+                      {tab === "misc" ? "해당 조건의 기타 항목이 없어요. 새로 등록해보세요." : "해당 조건의 무브먼트가 없어요. 새로 등록해보세요."}
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className="flex items-baseline gap-2 px-1 pb-1 border-b sticky z-10"
+                        style={{ borderColor: "#BFAE8C", top: tabBarHeight + filterBarHeight, backgroundColor: "#FBF7EF" }}
+                      >
+                        <span className="text-sm font-semibold" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                          {tab === "misc" ? "기타" : "무브먼트"}
+                        </span>
+                        <span className="text-xs" style={{ color: "#4F4030" }}>
+                          {buildFilterSummary(filteredMovements.length, movementFilterParts)}
+                        </span>
+                      </div>
+                      {filteredMovements.map((m) => (
+                        <React.Fragment key={m.id}>
+                          {editing && editing.item.id === m.id && <div className="mb-1">{renderEditForm()}</div>}
+                          <MovementCard
+                            item={m}
+                            onEdit={(it) => setEditing({ kind: "movement", item: it })}
+                            onDelete={deleteMovement}
+                            onStock={(it) => setStockTarget({ kind: "movement", item: it })}
+                          />
+                        </React.Fragment>
+                      ))}
+                    </>
+                  ))}
+                {(tab === "handsA" || tab === "handsB") &&
+                  (filteredHands.length === 0 ? (
+                    <div className="text-sm text-center py-8" style={{ color: "#4F4030" }}>
+                      해당 조건의 시계바늘이 없어요. 새로 등록해보세요.
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className="flex items-baseline gap-2 px-1 pb-1 border-b sticky z-10"
+                        style={{ borderColor: "#BFAE8C", top: tabBarHeight + filterBarHeight, backgroundColor: "#FBF7EF" }}
+                      >
+                        <span
+                          className="text-sm font-semibold"
+                          style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}
+                        >
+                          {tab === "handsA" ? "A타입" : "B타입"}
+                        </span>
+                        <span className="text-xs" style={{ color: "#4F4030" }}>
+                          {buildFilterSummary(filteredHands.length, handFilterParts)}
+                        </span>
+                      </div>
+                      {filteredHands.map((h) => (
+                        <React.Fragment key={h.id}>
+                          {editing && editing.item.id === h.id && <div className="mb-1">{renderEditForm()}</div>}
+                          <HandCard
+                            item={h}
+                            onEdit={(it) => setEditing({ kind: "hand", item: it })}
+                            onDelete={deleteHand}
+                            onStock={(it) => setStockTarget({ kind: "hand", item: it })}
+                          />
+                        </React.Fragment>
+                      ))}
+                    </>
+                  ))}
+              </div>
+            </>
+          )}
+
+          {tab === "log" && (
+            <div className="flex flex-col gap-4">
+              {transactions.length === 0 ? (
+                <div className="text-sm text-center py-8" style={{ color: "#4F4030" }}>
+                  아직 입출고 이력이 없어요.
+                </div>
+              ) : (
+                groupedTransactions.map((g) => (
+                  <div key={g.key} className="flex flex-col gap-2">
+                    <div
+                      className="text-xs font-semibold px-1 pb-1 border-b"
+                      style={{ color: "#463823", borderColor: "#BFAE8C" }}
+                    >
+                      {g.label} · {g.items.length}건
+                    </div>
+                    {g.items.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center gap-3 px-3 py-2 rounded border bg-white/70 text-sm"
+                        style={{ borderColor: "#BFAE8C" }}
+                      >
+                        {t.dir === "in" ? (
+                          <ArrowDownCircle size={16} style={{ color: "#5B7B5A" }} />
+                        ) : (
+                          <ArrowUpCircle size={16} style={{ color: "#B0503A" }} />
+                        )}
+                        <div className="flex-1">
+                          <span className="font-medium" style={{ color: "#2B2420" }}>
+                            {t.label}
+                          </span>
+                          <span className="mx-1.5" style={{ color: "#4F4030" }}>
+                            ·
+                          </span>
+                          <span style={{ color: "#5C4B36" }}>{t.kind === "movement" ? "무브먼트" : "시계바늘"}</span>
+                          {t.note && (
+                            <span className="ml-2 italic" style={{ color: "#4F4030" }}>
+                              {t.note}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className="font-semibold"
+                          style={{
+                            color: t.dir === "in" ? "#5B7B5A" : "#B0503A",
+                            fontFamily: "'IBM Plex Mono', monospace",
+                          }}
+                        >
+                          {t.dir === "in" ? "+" : "-"}
+                          {t.qty}
+                        </span>
+                        <span className="text-xs w-14 text-right" style={{ color: "#4F4030" }}>
+                          {new Date(t.date).toLocaleString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {tab === "info" && (
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm" style={{ color: "#4F4030" }}>
+                  자주 쓰는 사이트, 매뉴얼 문서, 참고 이미지를 등록해두는 곳이에요.
+                </span>
+                <button
+                  onClick={() => setEditingInfo(emptyInfoItem())}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded text-sm text-white"
+                  style={{ backgroundColor: "#7A5230" }}
+                >
+                  <Plus size={14} /> 등록
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <div className="relative w-40 shrink-0">
+                  <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-[#4F4030]" />
+                  <input
+                    className={inputCls + " pl-6 w-full"}
+                    style={filterInputStyle}
+                    placeholder="제목/소개 검색"
+                    value={infoQuery}
+                    onChange={(e) => setInfoQuery(e.target.value)}
+                  />
+                </div>
+                <select
+                  className={inputCls + " w-20"}
+                  style={filterInputStyle}
+                  value={infoKindFilter}
+                  onChange={(e) => setInfoKindFilter(e.target.value)}
+                >
+                  <option>전체</option>
+                  {INFO_KINDS.map((k) => (
+                    <option key={k}>{k}</option>
+                  ))}
+                </select>
+              </div>
+              {editingInfo && !filteredInfoItems.some((i) => i.id === editingInfo.id) && (
+                <InfoItemForm
+                  initial={editingInfo}
+                  onSave={saveInfoItem}
+                  onCancel={() => setEditingInfo(null)}
+                  isEdit={infoItems.some((i) => i.id === editingInfo.id)}
+                  infoItems={infoItems}
+                />
+              )}
+              {filteredInfoItems.length === 0 ? (
+                <div className="text-sm text-center py-8" style={{ color: "#4F4030" }}>
+                  {infoItems.length === 0
+                    ? "등록된 자료가 없어요. 자주 쓰는 사이트, 매뉴얼, 참고 이미지를 등록해보세요."
+                    : "검색 조건에 맞는 자료가 없어요."}
+                </div>
+              ) : (
+                INFO_KINDS.map((k) => {
+                  const items = filteredInfoItems
+                    .filter((i) => i.kind === k)
+                    .sort((a, b) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={k} className="flex flex-col gap-2">
+                      <div className="text-xs font-semibold px-1 pb-1 border-b" style={{ color: "#463823", borderColor: "#BFAE8C" }}>
+                        {k} · {items.length}건
+                      </div>
+                      {items.map((item) => (
+                        <React.Fragment key={item.id}>
+                          {editingInfo && editingInfo.id === item.id && (
+                            <div className="mb-1">
+                              <InfoItemForm
+                                initial={editingInfo}
+                                onSave={saveInfoItem}
+                                onCancel={() => setEditingInfo(null)}
+                                isEdit
+                                infoItems={infoItems}
+                              />
+                            </div>
+                          )}
+                          <InfoItemCard item={item} onEdit={(it) => setEditingInfo(it)} onDelete={deleteInfoItem} />
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {tab === "cnc" && <CncCalcSection movements={movements} />}
+        </div>
+
+        {error && <div className="mt-3 text-xs text-center" style={{ color: "#B0503A" }}>{error}</div>}
+      </div>
+
+      {stockTarget && (
+        <StockModal
+          item={stockTarget.item}
+          kind={stockTarget.kind}
+          onClose={() => setStockTarget(null)}
+          onCommit={(dir, qty, note, date) => commitStock(stockTarget.kind, stockTarget.item, dir, qty, note, date)}
+        />
+      )}
+
+      {settingsOpen && (
+        <SettingsModal
+          initial={githubSettings}
+          onClose={() => setSettingsOpen(false)}
+          onSave={saveGithubSettings}
+        />
+      )}
+
+      {toast && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2"
+          style={{ backgroundColor: "#5B7B5A", color: "white" }}
+        >
+          <CheckCircle2 size={15} /> {toast}
+        </div>
+      )}
+    </div>
+    </GithubSettingsContext.Provider>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<ClockPartsLedger />);
+</script>
+<script>
+  (function () {
+    const src = document.getElementById("app-source").textContent;
+    const compiled = Babel.transform(src, {
+      presets: [["react", { runtime: "classic" }]],
+    }).code;
+    const s = document.createElement("script");
+    s.textContent = compiled;
+    document.body.appendChild(s);
+  })();
+</script>
+</body>
+</html>
