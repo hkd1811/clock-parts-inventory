@@ -66,7 +66,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-07-31 v87 — 필터 체크박스 그룹 정정(축종류/소음종류/옵션), 태양축 기본체크";
+const APP_VERSION = "2026-08-03 v88 — 가공계산기: 나무두께가 너무 얇아 가공깊이 조절이 불가능할 때 버튼 비활성화+경고 표시";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -2744,6 +2744,7 @@ const CNC_PX_PER_MM = 3.7;
 // (매 키 입력마다 즉시 clamp하면, 예를 들어 "30"을 입력할 때 첫 글자 "3"만으로도 min/max에 걸려 튕겨나가면서
 //  자릿수가 긴 값을 직접 타이핑으로 입력할 수 없게 되는 버그가 있었음 — 스핀 버튼(▲▼)은 그대로 즉시 clamp)
 function CncSpinField({ label, value, onChange, min, max, step = 0.5 }) {
+  const locked = min !== undefined && max !== undefined && max - min < step / 2;
   const [raw, setRaw] = useState(String(value));
   useEffect(() => {
     setRaw(String(value));
@@ -2788,17 +2789,25 @@ function CncSpinField({ label, value, onChange, min, max, step = 0.5 }) {
       <div className="flex flex-col rounded border overflow-hidden" style={{ borderColor: "#BFAE8C", width: 28 }}>
         <button
           type="button"
+          disabled={locked}
           onClick={() => onChange(clamp(value + step))}
           className="text-[10px] leading-none py-1.5"
-          style={{ backgroundColor: "#EAE1CE", color: "#463823", borderBottom: "1px solid #BFAE8C" }}
+          style={{
+            backgroundColor: "#EAE1CE",
+            color: "#463823",
+            borderBottom: "1px solid #BFAE8C",
+            opacity: locked ? 0.35 : 1,
+            cursor: locked ? "not-allowed" : "pointer",
+          }}
         >
           ▲
         </button>
         <button
           type="button"
+          disabled={locked}
           onClick={() => onChange(clamp(value - step))}
           className="text-[10px] leading-none py-1.5"
-          style={{ backgroundColor: "#EAE1CE", color: "#463823" }}
+          style={{ backgroundColor: "#EAE1CE", color: "#463823", opacity: locked ? 0.35 : 1, cursor: locked ? "not-allowed" : "pointer" }}
         >
           ▼
         </button>
@@ -2965,6 +2974,9 @@ function CncCalcSection({ movements }) {
   const depthClamped = Math.min(Math.max(depth, depthMinBound), depthMaxBound);
   const atMinDepthLimit = spec && depthMinRaw > 0.01 && Math.abs(depthClamped - depthMinBound) < 0.01;
   const atMaxDepthLimit = spec && Math.abs(depthClamped - depthMaxBound) < 0.01 && depthMaxBound > depthMinBound + 0.01;
+  // 나무두께 자체가 안전 최소 벽두께(MIN_WALL_MM+0.5)보다 얇으면 상한=하한=0으로 붕괴되어 가공깊이를 아예 조절할 수 없음 —
+  // 이 경우 스핀버튼이 비활성화(CncSpinField의 locked 처리)되므로, 왜 안 움직이는지 설명하는 경고가 별도로 필요.
+  const depthLocked = spec && depthMaxBound - depthMinBound < 0.01;
   const remaining = Math.max(T - depthClamped, 0);
   const protrusion = spec ? Math.max(spec.shaftD - remaining, 0) : 0;
   const overhang = spec ? Math.max(MOVEMENT_SPEC_COMMON.bodyDepth - depthClamped, 0) : 0;
@@ -3020,15 +3032,17 @@ function CncCalcSection({ movements }) {
               <div
                 className="text-sm px-3 py-2.5 rounded"
                 style={
-                  atMinDepthLimit || atMaxDepthLimit
+                  atMinDepthLimit || atMaxDepthLimit || depthLocked
                     ? { backgroundColor: "#F3E3D3", color: "#B0503A" }
                     : { backgroundColor: "#E7EFE6", color: "#2B2420" }
                 }
               >
-                {(atMinDepthLimit || atMaxDepthLimit) && (
+                {(atMinDepthLimit || atMaxDepthLimit || depthLocked) && (
                   <div className="flex items-center gap-1 font-semibold mb-1">
                     <AlertTriangle size={13} className="shrink-0" />
-                    {atMinDepthLimit
+                    {depthLocked
+                      ? `나무두께(${T.toFixed(1)}mm)가 너무 얇아서 가공깊이를 조절할 수 없어요 — 최소 ${(MIN_WALL_MM + 0.5).toFixed(1)}mm 이상으로 늘려주세요`
+                      : atMinDepthLimit
                       ? "가공깊이 하한에 도달했어요 — 더 얕게 파면 축이 표면까지 안 닿아요"
                       : "가공깊이 상한에 도달했어요 — 더 깊게 파면 시계판이 너무 얇아져요"}
                   </div>
