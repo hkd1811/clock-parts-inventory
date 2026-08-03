@@ -66,7 +66,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-03 v93 — GitHub 동기화 진단 코드 제거, 다기기 동기화 검증 완료";
+const APP_VERSION = "2026-08-03 v94 — GitHub 동기화: 대용량 데이터 불러올 때 CDN 캐시 지연 우회";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -2258,7 +2258,9 @@ async function githubFetchLedger(settings) {
   if (json.encoding === "base64" && json.content) {
     text = base64ToUtf8(json.content);
   } else {
-    const rawRes = await fetch(json.download_url);
+    // raw.githubusercontent.com은 CDN 캐시를 거쳐서 커밋 직후에도 옛 내용을 줄 수 있음 — 매번 다른 쿼리스트링으로 캐시를 우회.
+    const cacheBustUrl = json.download_url + (json.download_url.includes("?") ? "&" : "?") + "_=" + Date.now();
+    const rawRes = await fetch(cacheBustUrl, { cache: "no-store" });
     if (!rawRes.ok) {
       const err = new Error(`GitHub 원본 데이터 불러오기 실패 (${rawRes.status}).`);
       err.status = rawRes.status;
