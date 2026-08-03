@@ -66,7 +66,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-03 v90 — GitHub 데이터 동기화 추가(재고/입출고를 여러 기기에서 공유)";
+const APP_VERSION = "2026-08-03 v91 — GitHub 동기화 복구용 '이 기기 데이터로 강제 덮어쓰기' 버튼 추가";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -2564,7 +2564,7 @@ function ImageSourcePicker({ value, onChange, label = "이미지" }) {
 
 /* ---------------------------- Settings Modal ---------------------------- */
 
-function SettingsModal({ initial, onClose, onSave }) {
+function SettingsModal({ initial, onClose, onSave, onForceUpload }) {
   const [owner, setOwner] = useState(initial.owner || "");
   const [repo, setRepo] = useState(initial.repo || "");
   const [branch, setBranch] = useState(initial.branch || "main");
@@ -2607,7 +2607,7 @@ function SettingsModal({ initial, onClose, onSave }) {
             />
           </Field>
           <div className="text-xs" style={{ color: "#4F4030" }}>
-            토큰은 이 브라우저(localStorage)에만 저장되고, 이미지 업로드 요청 시에만 사용돼요.
+            토큰은 이 브라우저(localStorage)에만 저장되고, 데이터 동기화·이미지 업로드 요청 시에만 사용돼요.
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-4">
@@ -2620,6 +2620,27 @@ function SettingsModal({ initial, onClose, onSave }) {
             style={{ backgroundColor: "#7A5230" }}
           >
             <Save size={14} /> 저장
+          </button>
+        </div>
+        <div className="mt-4 pt-3 border-t" style={{ borderColor: "#BFAE8C" }}>
+          <div className="text-xs mb-2" style={{ color: "#B0503A" }}>
+            다른 기기가 잘못되거나 오래된 데이터를 먼저 올려버렸을 때만 사용하세요. GitHub에 저장된 데이터를 <b>지금 이 화면(기기)의 데이터로 완전히 덮어씁니다.</b>
+          </div>
+          <button
+            onClick={() => {
+              const s = { owner: owner.trim(), repo: repo.trim(), branch: branch.trim() || "main", token: token.trim() };
+              if (!s.owner || !s.repo || !s.token) {
+                alert("계정/저장소/토큰을 먼저 입력해주세요.");
+                return;
+              }
+              if (window.confirm("GitHub에 저장된 데이터를 지금 이 기기의 데이터로 덮어씁니다. 되돌릴 수 없어요. 계속할까요?")) {
+                onForceUpload(s);
+              }
+            }}
+            className="w-full px-3 py-1.5 rounded text-sm border"
+            style={{ borderColor: "#B0503A", color: "#B0503A" }}
+          >
+            이 기기 데이터로 GitHub 강제 덮어쓰기
           </button>
         </div>
       </div>
@@ -3293,6 +3314,27 @@ function ClockPartsLedger() {
     }
   }, []);
 
+  const forceUploadToGithub = useCallback(async (gh) => {
+    if (!(gh.owner && gh.repo && gh.token)) return;
+    setSyncStatus("syncing");
+    try {
+      let sha = null;
+      try {
+        const remote = await githubFetchLedger(gh);
+        sha = remote.sha;
+      } catch (e) {
+        // 조회 실패해도 sha 없이 새로 생성 시도
+      }
+      const newSha = await githubPushLedger(gh, ledgerSnapshotRef.current, sha);
+      ledgerShaRef.current = newSha;
+      setSyncStatus("synced");
+      setSyncedAt(new Date());
+    } catch (e) {
+      setSyncStatus("error");
+      setSyncErrorMsg(e.message || "동기화 실패");
+    }
+  }, []);
+
   // 틀고정(sticky) 스택 — 탭바/필터바 높이를 실측해서 그 아래 요소들의 top을 정함.
   // 고정 px값을 쓰면 탭 버튼이 좁은 창에서 2줄로 줄바꿈될 때 높이가 달라져 어긋나므로 직접 측정한다.
   // (ResizeObserver를 먼저 시도했으나 이 앱을 미리보기하는 자동화 브라우저 환경에서 콜백이 전혀 발화하지 않는
@@ -3415,6 +3457,14 @@ function ClockPartsLedger() {
     saveGithubSettingsLS(s);
     setSettingsOpen(false);
     syncWithGithub(s);
+  };
+
+  // 복구용 — 다른 기기가 잘못된 데이터를 먼저 올려버렸을 때, 지금 이 기기 데이터로 GitHub를 강제로 덮어씀
+  const forceUploadGithubSettings = (s) => {
+    setGithubSettings(s);
+    saveGithubSettingsLS(s);
+    setSettingsOpen(false);
+    forceUploadToGithub(s);
   };
 
   const persist = useCallback(
@@ -4373,6 +4423,7 @@ function ClockPartsLedger() {
           initial={githubSettings}
           onClose={() => setSettingsOpen(false)}
           onSave={saveGithubSettings}
+          onForceUpload={forceUploadGithubSettings}
         />
       )}
 
