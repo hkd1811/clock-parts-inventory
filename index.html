@@ -66,7 +66,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-03 v89 — 가공계산기 숫자입력칸의 브라우저 기본 스핀 화살표 제거(아래 커스텀 스핀버튼만 사용)";
+const APP_VERSION = "2026-08-03 v90 — GitHub 데이터 동기화 추가(재고/입출고를 여러 기기에서 공유)";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -2216,6 +2216,83 @@ async function githubUploadImage(settings, file) {
   return `https://raw.githubusercontent.com/${owner}/${repo}/${branchName}/${path}`;
 }
 
+/* ---------------------------- GitHub 데이터 동기화 (재고 원장 JSON) ---------------------------- */
+/* 이미지 업로드(githubUploadImage)와 같은 GitHub 연결 설정(owner/repo/token)을 재사용해서,
+   movements/hands/transactions/infoItems/deletedSeedKeys를 저장소의 JSON 파일 하나로 동기화한다.
+   "한 번에 한 기기만 사용"을 전제로 한 단순 모델: 열 때 최신을 받아오고(pull), 저장할 때마다 올린다(push).
+   토큰(github_settings)은 이 파일에 절대 포함하지 않음 — 커밋 이력에 비밀값이 남는 걸 방지. */
+
+const LEDGER_SYNC_PATH = "data/ledger.json";
+
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary);
+}
+
+function base64ToUtf8(str) {
+  const binary = atob(str.replace(/\n/g, ""));
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+async function githubFetchLedger(settings) {
+  const { owner, repo, token, branch } = settings;
+  if (!owner || !repo || !token) return { data: null, sha: null };
+  const branchName = branch || "main";
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/contents/${LEDGER_SYNC_PATH}?ref=${branchName}`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
+  );
+  if (res.status === 404) return { data: null, sha: null };
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    const err = new Error(`GitHub 데이터 불러오기 실패 (${res.status}). ${t.slice(0, 200)}`);
+    err.status = res.status;
+    throw err;
+  }
+  const json = await res.json();
+  let parsed;
+  try {
+    parsed = JSON.parse(base64ToUtf8(json.content));
+  } catch (e) {
+    throw new Error("GitHub에 저장된 데이터 형식이 올바르지 않아요.");
+  }
+  return { data: parsed, sha: json.sha };
+}
+
+async function githubPushLedger(settings, ledgerData, sha) {
+  const { owner, repo, token, branch } = settings;
+  if (!owner || !repo || !token) {
+    throw new Error("GitHub 설정(계정/저장소/토큰)이 비어있어요. 설정 버튼을 눌러 입력해주세요.");
+  }
+  const branchName = branch || "main";
+  const body = {
+    message: `재고 데이터 동기화 - ${new Date().toISOString()}`,
+    content: utf8ToBase64(JSON.stringify(ledgerData, null, 2)),
+    branch: branchName,
+  };
+  if (sha) body.sha = sha;
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${LEDGER_SYNC_PATH}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    const err = new Error(`GitHub 데이터 저장 실패 (${res.status}). ${t.slice(0, 200)}`);
+    err.status = res.status;
+    throw err;
+  }
+  const json = await res.json();
+  return json.content.sha;
+}
+
 /* ---------------------------- Image Source Picker ---------------------------- */
 /* 붙여넣기(클립보드) / 파일 업로드(드래그 포함) / URL 직접입력 / GitHub 갤러리 선택을
    한 곳에서 지원하는 공용 이미지 입력 컴포넌트.
@@ -3140,6 +3217,82 @@ function ClockPartsLedger() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [toast, setToast] = useState("");
 
+  // GitHub 데이터 동기화 상태 — "한 기기씩만 사용" 전제로, persist()마다 push하고 연결 시점에 pull한다.
+  const [syncStatus, setSyncStatus] = useState("idle"); // idle | syncing | synced | error
+  const [syncedAt, setSyncedAt] = useState(null);
+  const [syncErrorMsg, setSyncErrorMsg] = useState("");
+  const ledgerShaRef = useRef(null); // GitHub 파일의 현재 sha — 업데이트할 때마다 필요
+  const ledgerSnapshotRef = useRef({ movements: [], hands: [], transactions: [], infoItems: [], deletedSeedKeys: [] });
+
+  // 매 변경마다 현재 스냅샷을 그대로 push — 다른 곳에서 이미 바뀐 상태면(409) sha를 다시 받아 한 번만 재시도.
+  const pushLedgerToGithub = useCallback(
+    async (isRetry) => {
+      if (!(githubSettings.owner && githubSettings.repo && githubSettings.token)) return;
+      setSyncStatus("syncing");
+      try {
+        const newSha = await githubPushLedger(githubSettings, ledgerSnapshotRef.current, ledgerShaRef.current);
+        ledgerShaRef.current = newSha;
+        setSyncStatus("synced");
+        setSyncedAt(new Date());
+      } catch (e) {
+        if (e.status === 409 && !isRetry) {
+          try {
+            const fresh = await githubFetchLedger(githubSettings);
+            ledgerShaRef.current = fresh.sha;
+            await pushLedgerToGithub(true);
+            return;
+          } catch (e2) {
+            setSyncStatus("error");
+            setSyncErrorMsg(e2.message || "동기화 실패");
+            return;
+          }
+        }
+        setSyncStatus("error");
+        setSyncErrorMsg(e.message || "동기화 실패");
+      }
+    },
+    [githubSettings]
+  );
+
+  // 연결 시점(최초 로드 또는 설정 저장)에 호출 — 원격에 데이터가 있으면 그걸 우선(pull), 없으면 지금 이 기기의 데이터를 최초 업로드.
+  const syncWithGithub = useCallback(async (gh) => {
+    if (!(gh.owner && gh.repo && gh.token)) return;
+    setSyncStatus("syncing");
+    try {
+      const remote = await githubFetchLedger(gh);
+      if (remote.data) {
+        const next = {
+          movements: remote.data.movements || [],
+          hands: remote.data.hands || [],
+          transactions: remote.data.transactions || [],
+          infoItems: remote.data.infoItems || [],
+          deletedSeedKeys: remote.data.deletedSeedKeys || [],
+        };
+        setMovements(next.movements);
+        setHands(next.hands);
+        setTransactions(next.transactions);
+        setInfoItems(next.infoItems);
+        setDeletedSeedKeys(next.deletedSeedKeys);
+        saveKey("movements", next.movements);
+        saveKey("hands", next.hands);
+        saveKey("transactions", next.transactions);
+        saveKey("infoItems", next.infoItems);
+        saveKey("deletedSeedKeys", next.deletedSeedKeys);
+        ledgerSnapshotRef.current = next;
+        ledgerShaRef.current = remote.sha;
+      } else {
+        // 원격에 아직 파일이 없으면(최초 연결) 지금 이 기기의 데이터를 그대로 처음 업로드
+        const newSha = await githubPushLedger(gh, ledgerSnapshotRef.current, null);
+        ledgerShaRef.current = newSha;
+      }
+      setSyncStatus("synced");
+      setSyncedAt(new Date());
+    } catch (e) {
+      setSyncStatus("error");
+      setSyncErrorMsg(e.message || "동기화 실패");
+    }
+  }, []);
+
   // 틀고정(sticky) 스택 — 탭바/필터바 높이를 실측해서 그 아래 요소들의 top을 정함.
   // 고정 px값을 쓰면 탭 버튼이 좁은 창에서 2줄로 줄바꿈될 때 높이가 달라져 어긋나므로 직접 측정한다.
   // (ResizeObserver를 먼저 시도했으나 이 앱을 미리보기하는 자동화 브라우저 환경에서 콜백이 전혀 발화하지 않는
@@ -3239,8 +3392,16 @@ function ClockPartsLedger() {
         if (mergedMovements !== data.movements || movementsChanged) saveKey("movements", normalizedMovements);
         if (mergedHands !== data.hands || colorChanged) saveKey("hands", normalizedHands);
         if (infoChanged) saveKey("infoItems", normalizedInfoItems);
+        ledgerSnapshotRef.current = {
+          movements: normalizedMovements,
+          hands: normalizedHands,
+          transactions: data.transactions,
+          infoItems: normalizedInfoItems,
+          deletedSeedKeys: data.deletedSeedKeys || [],
+        };
         const gh = loadGithubSettingsLS();
         if (gh) setGithubSettings(gh);
+        if (gh && gh.owner && gh.repo && gh.token) await syncWithGithub(gh);
       } catch (e) {
         setError("저장된 데이터를 불러오지 못했어요.");
       } finally {
@@ -3253,11 +3414,17 @@ function ClockPartsLedger() {
     setGithubSettings(s);
     saveGithubSettingsLS(s);
     setSettingsOpen(false);
+    syncWithGithub(s);
   };
 
-  const persist = useCallback((key, val) => {
-    saveKey(key, val);
-  }, []);
+  const persist = useCallback(
+    (key, val) => {
+      ledgerSnapshotRef.current = { ...ledgerSnapshotRef.current, [key]: val };
+      saveKey(key, val);
+      pushLedgerToGithub();
+    },
+    [pushLedgerToGithub]
+  );
 
   /* ---- CRUD ---- */
   const saveMovement = (f) => {
@@ -3315,7 +3482,7 @@ function ClockPartsLedger() {
     if (!keys.length) return;
     setDeletedSeedKeys((prev) => {
       const next = Array.from(new Set([...prev, ...keys]));
-      saveKey("deletedSeedKeys", next);
+      persist("deletedSeedKeys", next);
       return next;
     });
   };
@@ -3660,6 +3827,24 @@ function ClockPartsLedger() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {Boolean(githubSettings.owner && githubSettings.repo && githubSettings.token) && (
+              <div
+                className="text-[10px] px-2 py-1 rounded flex items-center gap-1"
+                style={
+                  syncStatus === "error"
+                    ? { backgroundColor: "#F3E3D3", color: "#B0503A", cursor: "pointer" }
+                    : { backgroundColor: "#E7EFE6", color: "#2B2420" }
+                }
+                title={syncStatus === "error" ? syncErrorMsg + " (클릭하면 다시 시도)" : "GitHub와 데이터 동기화 상태"}
+                onClick={syncStatus === "error" ? () => pushLedgerToGithub() : undefined}
+              >
+                {syncStatus === "syncing" && "동기화 중..."}
+                {syncStatus === "synced" &&
+                  "동기화됨 " + (syncedAt ? syncedAt.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }) : "")}
+                {syncStatus === "error" && "동기화 실패 (클릭)"}
+                {syncStatus === "idle" && "대기 중"}
+              </div>
+            )}
             {lowStockCount > 0 && (
               <div
                 className="text-xs px-2.5 py-1 rounded flex items-center gap-1"
