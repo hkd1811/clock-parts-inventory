@@ -24,7 +24,7 @@
 - `movements`/`hands`/`transactions`/`infoItems`/`deletedSeedKeys` 5개 키를 저장소의 **`data/ledger.json`** 파일 하나로 동기화한다.
 - 기존 이미지 업로드용 GitHub 연결 설정(owner/repo/token, `GithubSettingsContext`)을 그대로 재사용 — 토큰은 절대 ledger.json에 포함 안 시킴(동기화 대상 5개 키에 github_settings는 없음, 이 경계 유지할 것).
 - **모든 CRUD는 `persist(key, val)` 하나를 거친다** — 새 필드/기능 추가 시 이 함수만 건드리면 동기화까지 자동으로 딸려온다. 개별 CRUD 핸들러를 일일이 고칠 필요 없음.
-- **GitHub Contents API는 파일이 1MB 넘으면 `content`를 안 준다**(`encoding:"none"`) — `githubFetchLedger`는 이 경우 `download_url`에서 원문을 직접 받아오도록 폴백되어 있음. 이 폴백 지우지 말 것 — ledger.json이 이미지 base64 때문에 이미 1.5MB 정도 됨.
+- **GitHub Contents API는 파일이 1MB 넘으면 `content`를 안 준다**(`encoding:"none"`) — `githubFetchLedger`는 이 경우 **Git Blobs API**(`GET /repos/{owner}/{repo}/git/blobs/{sha}`, `api.github.com`)에서 원문을 직접 받아오도록 폴백되어 있음. **`download_url`(`raw.githubusercontent.com`)은 절대 쓰지 말 것** — Fastly CDN을 거쳐서 `Cache-Control: max-age=300`으로 캐시되는데, 쿼리스트링을 바꿔도 캐시를 무시 못 함(`X-Cache: HIT`로 실측 확인됨) — 커밋 직후 최대 5분간 옛 데이터를 주는 실제 버그를 냈던 원인. Git Blobs API는 캐시 없이 sha 그대로의 정확한 내용을 즉시 줌 — 이 폴백을 다시 `download_url`로 되돌리지 말 것.
 - **"이 기기 데이터로 GitHub 강제 덮어쓰기" 버튼**(설정 모달 하단, 빨간 글씨): 원격 데이터를 신뢰하지 않고 지금 이 기기 데이터로 무조건 덮어씀. 다른 기기가 먼저 잘못된/오래된 데이터를 올려버렸을 때 복구용. 일반 "저장" 버튼은 반대로 원격이 있으면 그걸 우선 pull하니, 복구 상황에서 실수로 "저장"을 누르면 오히려 진짜 데이터가 덮어써질 수 있음 — 주의.
 
 ## 테스트 워크플로우
