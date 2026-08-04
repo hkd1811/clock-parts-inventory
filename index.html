@@ -67,7 +67,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-04 v99 — 진단용: 화면 실제 폭 표시 추가";
+const APP_VERSION = "2026-08-04 v100 — 모바일: 제품명 말줄임표 처리로 카드 깨짐 근본 해결";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -1095,21 +1095,6 @@ function saveGithubSettingsLS(s) {
 
 /* ---------------------------- UI atoms ---------------------------- */
 
-// 임시 진단용 — 실제 기기의 CSS 뷰포트 폭을 화면에 직접 표시해서 반응형 브레이크포인트 문제를 정확히 확인
-function DebugViewportWidth() {
-  const [w, setW] = useState(window.innerWidth);
-  useEffect(() => {
-    const onResize = () => setW(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  return (
-    <div className="text-[11px] font-bold mt-0.5" style={{ color: "#B0503A" }}>
-      화면폭: {w}px (진단용, 나중에 제거)
-    </div>
-  );
-}
-
 function StockBadge({ stock }) {
   // 숫자 중심의 단순 재고 뱃지. stock==0 이면 빨간 톤, 낮으면 러스트, 충분하면 세이지.
   const color = stock === 0 ? "#B0503A" : stock <= 2 ? "#C08A3E" : "#5B7B5A";
@@ -1728,14 +1713,14 @@ function MovementCard({ item, onEdit, onDelete, onStock }) {
       {zoomOpen && <ImageLightbox src={item.image} alt={item.brand} onClose={() => setZoomOpen(false)} />}
       <div className="flex-1 min-w-0">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="min-w-0 w-full">
             {item.category === "기타" ? (
-              <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+              <div className="font-semibold text-[15px] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
                 {item.model || "(상품명 미입력)"}
               </div>
             ) : (
               <>
-                <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                <div className="font-semibold text-[15px] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
                   {item.model || item.brand} ·{" "}
                   <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{item.shaftLength || "-"}</span>
                 </div>
@@ -1834,8 +1819,8 @@ function HandCard({ item, onEdit, onDelete, onStock }) {
       {zoomOpen && <ImageLightbox src={item.image} alt={item.model || item.color} onClose={() => setZoomOpen(false)} />}
       <div className="flex-1 min-w-0">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+          <div className="min-w-0 w-full">
+            <div className="font-semibold text-[15px] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
               {item.model || item.type} ·{" "}
               <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{item.length || "-"}mm</span>
             </div>
@@ -3911,7 +3896,6 @@ function ClockPartsLedger() {
             >
               {APP_VERSION}
             </div>
-            <DebugViewportWidth />
           </div>
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
             {Boolean(githubSettings.owner && githubSettings.repo && githubSettings.token) && (
