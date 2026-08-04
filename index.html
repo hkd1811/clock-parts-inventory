@@ -67,7 +67,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-04 v101 — 모바일 전체 재점검: 카드 버튼줄/가공계산기 탭 폭 넘침 수정";
+const APP_VERSION = "2026-08-04 v102 — 모바일: 이미지/뱃지/글자 크기를 화면 폭에 비례해서 자동 조절";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -1095,6 +1095,13 @@ function saveGithubSettingsLS(s) {
 
 /* ---------------------------- UI atoms ---------------------------- */
 
+// 뱃지 크기/글자를 화면 폭에 비례해서 매끄럽게 줄이는 clamp(최소, 화면비례값, 최대) — 좁은 화면에서 프레임을 벗어나지 않으면서
+// PC에서는 기존 크기(72px) 그대로 유지됨. 중간 크기 브레이크포인트 하나만 두는 대신 연속적으로 비율 조절.
+const BADGE_SIZE = "clamp(52px, 13vw, 72px)";
+const BADGE_NUM_FONT_LONG = "clamp(16px, 4.5vw, 22px)"; // 3자리 이상
+const BADGE_NUM_FONT_SHORT = "clamp(20px, 6vw, 30px)"; // 2자리 이하
+const BADGE_LABEL_FONT = "clamp(8px, 2vw, 10px)";
+
 function StockBadge({ stock }) {
   // 숫자 중심의 단순 재고 뱃지. stock==0 이면 빨간 톤, 낮으면 러스트, 충분하면 세이지.
   const color = stock === 0 ? "#B0503A" : stock <= 2 ? "#C08A3E" : "#5B7B5A";
@@ -1103,15 +1110,15 @@ function StockBadge({ stock }) {
   return (
     <div
       className="shrink-0 flex flex-col items-center justify-center rounded-lg"
-      style={{ width: 72, height: 72, backgroundColor: bg, border: `2px solid ${color}` }}
+      style={{ width: BADGE_SIZE, height: BADGE_SIZE, backgroundColor: bg, border: `2px solid ${color}` }}
     >
       <span
         className="font-extrabold leading-none"
-        style={{ color, fontSize: text.length > 2 ? 22 : 30, fontFamily: "'IBM Plex Mono', monospace" }}
+        style={{ color, fontSize: text.length > 2 ? BADGE_NUM_FONT_LONG : BADGE_NUM_FONT_SHORT, fontFamily: "'IBM Plex Mono', monospace" }}
       >
         {stock}
       </span>
-      <span className="leading-tight font-semibold" style={{ color, fontSize: 10 }}>
+      <span className="leading-tight font-semibold" style={{ color, fontSize: BADGE_LABEL_FONT }}>
         재고
       </span>
     </div>
@@ -1125,16 +1132,16 @@ function DrawerBadge({ drawer }) {
   return (
     <div
       className="shrink-0 flex flex-col items-center justify-center rounded-lg"
-      style={{ width: 72, height: 72, backgroundColor: "#F5C518", border: "2px solid #C99A00" }}
+      style={{ width: BADGE_SIZE, height: BADGE_SIZE, backgroundColor: "#F5C518", border: "2px solid #C99A00" }}
       title={`서랍 ${text}`}
     >
       <span
         className="font-extrabold leading-none"
-        style={{ color: "#1A1A1A", fontSize: text.length > 2 ? 22 : 30, fontFamily: "'IBM Plex Mono', monospace" }}
+        style={{ color: "#1A1A1A", fontSize: text.length > 2 ? BADGE_NUM_FONT_LONG : BADGE_NUM_FONT_SHORT, fontFamily: "'IBM Plex Mono', monospace" }}
       >
         {text}
       </span>
-      <span className="leading-tight font-semibold" style={{ color: "#1A1A1A", fontSize: 10 }}>
+      <span className="leading-tight font-semibold" style={{ color: "#1A1A1A", fontSize: BADGE_LABEL_FONT }}>
         서랍No
       </span>
     </div>
@@ -1158,7 +1165,9 @@ function PriorityBadge({ priority }) {
   );
 }
 
-function ImgThumb({ src, alt, size = 88 }) {
+// 기본값(size 안 넘길 때)은 화면 폭에 비례해 60~88px로 매끄럽게 줄어듦 — 이미지는 탭하면 어차피 확대되니
+// 좁은 화면에서 작게 보여도 정보 손실이 없음. 명시적으로 size를 넘기는 다른 용도(갤러리 등)는 그대로 고정 크기 유지.
+function ImgThumb({ src, alt, size = "clamp(60px, 18vw, 88px)" }) {
   const [broken, setBroken] = useState(false);
   return (
     <div
@@ -1694,7 +1703,7 @@ function StockModal({ item, kind, onClose, onCommit }) {
 function MovementCard({ item, onEdit, onDelete, onStock }) {
   const [zoomOpen, setZoomOpen] = useState(false);
   return (
-    <div className="flex gap-3 p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
+    <div className="flex gap-2 p-2 sm:gap-3 sm:p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
       {item.source ? (
         <a href={item.source} target="_blank" rel="noopener noreferrer" title="구매처 사이트 열기">
           <ImgThumb src={item.image} alt={item.brand} />
@@ -1715,12 +1724,12 @@ function MovementCard({ item, onEdit, onDelete, onStock }) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 w-full">
             {item.category === "기타" ? (
-              <div className="font-semibold text-[15px] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+              <div className="font-semibold text-[clamp(12px,3.5vw,15px)] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
                 {item.model || "(상품명 미입력)"}
               </div>
             ) : (
               <>
-                <div className="font-semibold text-[15px] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+                <div className="font-semibold text-[clamp(12px,3.5vw,15px)] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
                   {item.model || item.brand} ·{" "}
                   <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{item.shaftLength || "-"}</span>
                 </div>
@@ -1748,7 +1757,7 @@ function MovementCard({ item, onEdit, onDelete, onStock }) {
             )}
             {item.note && <div className="text-xs mt-1 italic" style={{ color: "#4F4030" }}>{item.note}</div>}
           </div>
-          <div className="flex items-center" style={{ gap: 19 }}>
+          <div className="flex items-center flex-wrap" style={{ gap: "clamp(8px, 3vw, 19px)" }}>
             <DrawerBadge drawer={item.drawer} />
             <StockBadge stock={item.stock} />
           </div>
@@ -1800,7 +1809,7 @@ function MovementCard({ item, onEdit, onDelete, onStock }) {
 function HandCard({ item, onEdit, onDelete, onStock }) {
   const [zoomOpen, setZoomOpen] = useState(false);
   return (
-    <div className="flex gap-3 p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
+    <div className="flex gap-2 p-2 sm:gap-3 sm:p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
       {item.source ? (
         <a href={item.source} target="_blank" rel="noopener noreferrer" title="구매처 사이트 열기">
           <ImgThumb src={item.image} alt={item.model || item.color} />
@@ -1820,7 +1829,7 @@ function HandCard({ item, onEdit, onDelete, onStock }) {
       <div className="flex-1 min-w-0">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 w-full">
-            <div className="font-semibold text-[15px] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
+            <div className="font-semibold text-[clamp(12px,3.5vw,15px)] truncate" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
               {item.model || item.type} ·{" "}
               <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>{item.length || "-"}mm</span>
             </div>
@@ -1834,7 +1843,7 @@ function HandCard({ item, onEdit, onDelete, onStock }) {
             )}
             {item.note && <div className="text-xs mt-1 italic" style={{ color: "#4F4030" }}>{item.note}</div>}
           </div>
-          <div className="flex items-center" style={{ gap: 19 }}>
+          <div className="flex items-center flex-wrap" style={{ gap: "clamp(8px, 3vw, 19px)" }}>
             <DrawerBadge drawer={item.drawer} />
             <StockBadge stock={item.stock} />
           </div>
@@ -2036,7 +2045,7 @@ function InfoItemCard({ item, onEdit, onDelete }) {
   const [zoomOpen, setZoomOpen] = useState(false);
   const colors = INFO_KIND_COLORS[item.kind] || { bg: "#E8DEC7", text: "#463823" };
   return (
-    <div className="flex gap-3 p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
+    <div className="flex gap-2 p-2 sm:gap-3 sm:p-3 rounded-lg border bg-white/70 shadow-sm" style={{ borderColor: "#BFAE8C" }}>
       {item.kind === "이미지" && (
         <button
           type="button"
