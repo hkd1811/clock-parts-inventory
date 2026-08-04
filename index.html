@@ -67,7 +67,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-04 v102 — 모바일: 이미지/뱃지/글자 크기를 화면 폭에 비례해서 자동 조절";
+const APP_VERSION = "2026-08-04 v103 — PC에서 뱃지 세로 정렬되던 회귀 수정";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -1757,7 +1757,7 @@ function MovementCard({ item, onEdit, onDelete, onStock }) {
             )}
             {item.note && <div className="text-xs mt-1 italic" style={{ color: "#4F4030" }}>{item.note}</div>}
           </div>
-          <div className="flex items-center flex-wrap" style={{ gap: "clamp(8px, 3vw, 19px)" }}>
+          <div className="flex items-center flex-wrap shrink-0" style={{ gap: "clamp(8px, 3vw, 19px)" }}>
             <DrawerBadge drawer={item.drawer} />
             <StockBadge stock={item.stock} />
           </div>
@@ -1843,7 +1843,7 @@ function HandCard({ item, onEdit, onDelete, onStock }) {
             )}
             {item.note && <div className="text-xs mt-1 italic" style={{ color: "#4F4030" }}>{item.note}</div>}
           </div>
-          <div className="flex items-center flex-wrap" style={{ gap: "clamp(8px, 3vw, 19px)" }}>
+          <div className="flex items-center flex-wrap shrink-0" style={{ gap: "clamp(8px, 3vw, 19px)" }}>
             <DrawerBadge drawer={item.drawer} />
             <StockBadge stock={item.stock} />
           </div>
