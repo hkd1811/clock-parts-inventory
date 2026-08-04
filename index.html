@@ -67,7 +67,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-04 v97 — 모바일 반응형 개선(탭 가로스크롤, 헤더 압축) 1차";
+const APP_VERSION = "2026-08-04 v98 — 모바일: 제품 카드 뱃지-텍스트 겹침 수정";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -1712,7 +1712,7 @@ function MovementCard({ item, onEdit, onDelete, onStock }) {
       )}
       {zoomOpen && <ImageLightbox src={item.image} alt={item.brand} onClose={() => setZoomOpen(false)} />}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             {item.category === "기타" ? (
               <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
@@ -1818,7 +1818,7 @@ function HandCard({ item, onEdit, onDelete, onStock }) {
       )}
       {zoomOpen && <ImageLightbox src={item.image} alt={item.model || item.color} onClose={() => setZoomOpen(false)} />}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="font-semibold text-[15px]" style={{ color: "#2B2420", fontFamily: "'Spectral', serif" }}>
               {item.model || item.type} ·{" "}
