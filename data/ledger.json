@@ -1595,6 +1595,16 @@
   ],
   "transactions": [
     {
+      "id": "rzp7vok2msv5952d",
+      "kind": "hand",
+      "itemId": "dhny3ovjms9pkbu1",
+      "label": "A타입 156mm",
+      "dir": "out",
+      "qty": 1,
+      "note": "물방울 시계",
+      "date": "2026-08-16T01:46:31.000Z"
+    },
+    {
       "id": "kn2cxovwmsbt9vvo",
       "kind": "hand",
       "itemId": "ek9pxbyfms1hdloc",
