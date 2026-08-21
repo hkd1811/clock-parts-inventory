@@ -1314,7 +1314,7 @@
       "price": 1100,
       "source": "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1143",
       "image": "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1143.jpg",
-      "stock": 10,
+      "stock": 15,
       "drawer": "",
       "note": "A07(클락포인트)",
       "model": "A07(온도계)"
@@ -1594,6 +1594,26 @@
     }
   ],
   "transactions": [
+    {
+      "id": "87nfshh0mt2vl7a7",
+      "kind": "hand",
+      "itemId": "w8m53ebnmrmqao3c",
+      "label": "A타입 55mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:38:07.000Z"
+    },
+    {
+      "id": "r8uirkknmt2vh7p9",
+      "kind": "hand",
+      "itemId": "668jlo43ms1dpcmw",
+      "label": "A타입 83mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:35:01.000Z"
+    },
     {
       "id": "agdlb91vmt2vgco8",
       "kind": "hand",
