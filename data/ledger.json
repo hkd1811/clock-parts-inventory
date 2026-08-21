@@ -1595,6 +1595,16 @@
   ],
   "transactions": [
     {
+      "id": "9rb8hpkymt2v1512",
+      "kind": "hand",
+      "itemId": "ixiwi14mmrmqao3c",
+      "label": "A타입 35mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:22:31.000Z"
+    },
+    {
       "id": "ywy4toc5msv5afsv",
       "kind": "movement",
       "itemId": "414um7t8ms9znrx1",
