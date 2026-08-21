@@ -1418,7 +1418,7 @@
       "price": 1300,
       "source": "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1011",
       "image": "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1011.jpg",
-      "stock": 0,
+      "stock": 5,
       "drawer": "",
       "note": "클락포인트 A19",
       "model": "A19"
@@ -1594,6 +1594,16 @@
     }
   ],
   "transactions": [
+    {
+      "id": "agdlb91vmt2vgco8",
+      "kind": "hand",
+      "itemId": "q4zslxyjmrmqao3c",
+      "label": "A타입 70mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:34:21.000Z"
+    },
     {
       "id": "34efejatmt2vaf97",
       "kind": "hand",
