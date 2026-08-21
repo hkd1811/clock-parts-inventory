@@ -1379,7 +1379,7 @@
       "price": 1300,
       "source": "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1008",
       "image": "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1008.jpg",
-      "stock": 0,
+      "stock": 5,
       "drawer": "",
       "note": "클락포인트 A16",
       "model": "A16"
@@ -1594,6 +1594,16 @@
     }
   ],
   "transactions": [
+    {
+      "id": "9p4upfz1mt2v90sc",
+      "kind": "hand",
+      "itemId": "nfasjx9tmrmqao3c",
+      "label": "A타입 63mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:28:39.000Z"
+    },
     {
       "id": "mwtfaeo3mt2v6enr",
       "kind": "hand",
