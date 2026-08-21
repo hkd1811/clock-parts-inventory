@@ -1595,6 +1595,16 @@
   ],
   "transactions": [
     {
+      "id": "mwtfaeo3mt2v6enr",
+      "kind": "hand",
+      "itemId": "zttza25tmrmqao3c",
+      "label": "A타입 65mm",
+      "dir": "in",
+      "qty": 8,
+      "note": "",
+      "date": "2026-08-21T11:26:37.000Z"
+    },
+    {
       "id": "9rb8hpkymt2v1512",
       "kind": "hand",
       "itemId": "ixiwi14mmrmqao3c",
