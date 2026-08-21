@@ -1595,6 +1595,16 @@
   ],
   "transactions": [
     {
+      "id": "34efejatmt2vaf97",
+      "kind": "hand",
+      "itemId": "akniocjkmrmqao3c",
+      "label": "A타입 63mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:29:44.000Z"
+    },
+    {
       "id": "9p4upfz1mt2v90sc",
       "kind": "hand",
       "itemId": "nfasjx9tmrmqao3c",
