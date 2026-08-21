@@ -964,7 +964,7 @@
       "price": 1800,
       "source": "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1005",
       "image": "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1005.jpg",
-      "stock": 0,
+      "stock": 5,
       "drawer": "",
       "note": "클락포인트 A10",
       "model": "A10"
