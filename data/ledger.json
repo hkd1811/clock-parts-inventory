@@ -1595,6 +1595,16 @@
   ],
   "transactions": [
     {
+      "id": "dv6hnarnmt2vph3g",
+      "kind": "hand",
+      "itemId": "d9gcdmezmrmqao3c",
+      "label": "A타입 92mm",
+      "dir": "in",
+      "qty": 5,
+      "note": "",
+      "date": "2026-08-21T11:41:26.000Z"
+    },
+    {
       "id": "87nfshh0mt2vl7a7",
       "kind": "hand",
       "itemId": "w8m53ebnmrmqao3c",
