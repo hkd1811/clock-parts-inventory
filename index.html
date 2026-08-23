@@ -67,7 +67,7 @@ const GithubSettingsContext = React.createContext({ owner: "", repo: "", branch:
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-const APP_VERSION = "2026-08-04 v103 — PC에서 뱃지 세로 정렬되던 회귀 수정";
+const APP_VERSION = "2026-08-16 v104 — 입출고 모달 기본값을 출고로 변경";
 
 const BRANDS = ["스즈키", "영타운", "세이코", "기타"];
 const SHAFT_LENGTHS = ["7mm", "10mm", "14mm", "18mm"];
@@ -1606,7 +1606,7 @@ function HandForm({ initial, onSave, onCancel, isEdit = false, existingItems = [
 /* ---------------------------- Stock modal ---------------------------- */
 
 function StockModal({ item, kind, onClose, onCommit }) {
-  const [dir, setDir] = useState("in");
+  const [dir, setDir] = useState("out");
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
