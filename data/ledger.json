@@ -1431,7 +1431,7 @@
       "price": 1300,
       "source": "http://www.clockpoint.co.kr/goods/goods_view.php?goodsNo=1012",
       "image": "https://raw.githubusercontent.com/hkd1811/clock-parts-inventory/main/1012.jpg",
-      "stock": 5,
+      "stock": 3,
       "drawer": "",
       "note": "A22(클락포인트)",
       "model": "A22"
@@ -1594,6 +1594,16 @@
     }
   ],
   "transactions": [
+    {
+      "id": "gw8xg48lmu7yt0mw",
+      "kind": "hand",
+      "itemId": "5bi2w2evmrmqao3c",
+      "label": "A타입 83mm",
+      "dir": "out",
+      "qty": 2,
+      "note": "심플 부엉이",
+      "date": "2026-09-19T05:46:44.000Z"
+    },
     {
       "id": "9vf6e0d7mt2vxlf2",
       "kind": "hand",
